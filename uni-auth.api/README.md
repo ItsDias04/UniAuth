@@ -96,3 +96,32 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Docker
+
+- **Build image:**
+
+```powershell
+docker build -t uni-auth-api .
+```
+
+- **Run single container (useful for testing against an external Redis):**
+
+```powershell
+docker run --rm -e REDIS_HOST=host.docker.internal -p 3000:3000 uni-auth-api
+```
+
+- **Run with Docker Compose (recommended, includes Redis):**
+
+```powershell
+docker-compose up --build
+```
+
+- **Notes:**
+  - The app listens on port `3000` by default; change by setting the `PORT` env var.
+  - When using `docker-compose`, the API is configured to connect to the `redis` service via `REDIS_HOST=redis`.
+  - To stop and remove containers started by Compose:
+
+```powershell
+docker-compose down
+```

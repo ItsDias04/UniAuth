@@ -4,6 +4,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { RedisModule } from './redis/redis.module';
+import { IdentityModule } from './identity/identity.module';
+import { MfaModule } from './mfa/mfa.module';
+import { MediatorModule } from './common/mediator/mediator.module';
+import { OidcModule } from './oidc/oidc.module';
+import { TokensModule } from './tokens/tokens.module';
+import { ClientsModule } from './clients/clients.module';
+import { SecurityModule } from './security/security.module';
 
 @Module({
   imports: [
@@ -20,6 +27,13 @@ import { RedisModule } from './redis/redis.module';
       autoLoadEntities: true,
     }),
     RedisModule,
+    IdentityModule,
+    MfaModule,
+    MediatorModule,
+    ClientsModule,
+    OidcModule,
+    TokensModule,
+    SecurityModule,
   ],
   controllers: [AppController],
   providers: [AppService],
