@@ -1,6 +1,5 @@
 import { Controller, Get, Post, Body, Query, UseGuards, Req, Res, BadRequestException } from '@nestjs/common';
 import { OidcService } from '../../application/services/oidc.service';
-import { IdentityService } from '../../../identity/application/services/identity.service/identity.service';
 import { AuthGuard } from '@nestjs/passport';
 import type { Response } from 'express';
 import { AuthService } from '../../../identity/application/services/auth.service/auth.service';
@@ -12,7 +11,6 @@ import { SecurityEventType } from '../../../security/data/entities/security-even
 export class OidcController {
   constructor(
     private readonly oidc: OidcService,
-    private readonly identity: IdentityService,
     private readonly auth: AuthService,
     private readonly mfa: MfaService,
     private readonly security: SecurityService,
@@ -27,19 +25,6 @@ export class OidcController {
       userinfo_endpoint: 'http://localhost:3000/userinfo',
       jwks_uri: 'http://localhost:3000/.well-known/jwks.json',
     };
-  }
-
-  // For simplified testing: accept username/password and PKCE params, return code
-  @Post('oauth/authorize')
-  async authorize(@Body() body: any) {
-    const { username, password, client_id, redirect_uri, code_challenge, code_challenge_method } = body;
-    const valid = await this.identity.validateCredentials(username, password);
-    if (!valid) return { error: 'access_denied' };
-    const user = await this.identity.findByEmail(username);
-    if (!user) return { error: 'access_denied' };
-    const code = await this.oidc.createAuthorizationCode(user.id, client_id, redirect_uri, code_challenge, code_challenge_method);
-    // In real flow redirect to redirect_uri?code=...
-    return { code, redirect_uri };
   }
 
   // Real-ish browser flow: validate request, then redirect to Angular login UI.

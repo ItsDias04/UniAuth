@@ -5,7 +5,6 @@ import { MFAMethod, MFAMethodType } from '../../data/entities/mfa-method.entity'
 import { TOTPConfig } from '../../data/entities/totp-config.entity';
 import { MFAChallenge } from '../../data/entities/mfa-challenge.entity';
 import { User } from '../../../identity/data/entities/user.entity';
-import { randomBytes } from 'crypto';
 import { authenticator } from 'otplib';
 
 @Injectable()
@@ -18,23 +17,6 @@ export class MfaService {
     @InjectRepository(MFAChallenge)
     private readonly challenges: Repository<MFAChallenge>,
   ) {}
-
-  async enableTOTPForUser(user: User) {
-    const method = new MFAMethod();
-    method.user = user;
-    method.type = MFAMethodType.TOTP;
-    method.confirmed = false;
-    const savedMethod = await this.methods.save(method);
-
-    // generate secret using otplib authenticator (RFC6238)
-    const secret = authenticator.generateSecret();
-    const cfg = new TOTPConfig();
-    cfg.method = savedMethod;
-    cfg.secretSeed = secret;
-    await this.tots.save(cfg);
-
-    return { method: savedMethod, secret }; // secret should be shown once to user
-  }
 
   async enrollTotpForUser(user: { id: string; email?: string }) {
     const method = new MFAMethod();

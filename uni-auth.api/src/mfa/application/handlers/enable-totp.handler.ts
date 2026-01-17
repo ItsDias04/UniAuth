@@ -7,7 +7,8 @@ export class EnableTotpHandler implements ICommandHandler<EnableTotpCommand> {
   constructor(private readonly mfa: MfaService) {}
 
   async execute(command: EnableTotpCommand) {
-    const user = { id: command.userId } as any; // in real app resolve user entity
-    return this.mfa.enableTOTPForUser(user);
+    // Legacy CQRS handler kept for potential future use.
+    // Prefer authenticated REST endpoints: POST /mfa/totp/enroll + POST /mfa/totp/confirm.
+    return this.mfa.enrollTotpForUser({ id: command.userId });
   }
 }

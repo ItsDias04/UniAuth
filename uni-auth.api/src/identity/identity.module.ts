@@ -12,12 +12,14 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './infrastructure/security/jwt.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CreateUserHandler } from './application/handlers/create-user.handler';
+import { SecurityModule } from '../security/security.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Credential, IdentityProfile]),
     CqrsModule,
     PassportModule,
+    SecurityModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

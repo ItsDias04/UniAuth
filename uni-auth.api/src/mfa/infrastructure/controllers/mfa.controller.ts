@@ -1,15 +1,13 @@
-import { Controller, Post, Body, Param, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
 import { MfaService } from '../../application/services/mfa.service';
-import { EnableTotpDto } from '../../dto/enable-totp.dto';
-import { InitiateSmsDto } from '../../dto/initiate-sms.dto';
-import { VerifyChallengeDto } from '../../dto/verify-challenge.dto';
-import { VerifyTotpDto } from '../../dto/verify-totp.dto';
 import { ConfirmTotpDto } from '../../dto/confirm-totp.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { SecurityService } from '../../../security/application/services/security.service';
+import { SecurityEventType } from '../../../security/data/entities/security-event.entity';
 
 @Controller('mfa')
 export class MfaController {
-  constructor(private readonly mfa: MfaService) {}
+  constructor(private readonly mfa: MfaService, private readonly security: SecurityService) {}
 
   @UseGuards(AuthGuard('jwt'))
   @Get('methods')
@@ -20,35 +18,33 @@ export class MfaController {
   @UseGuards(AuthGuard('jwt'))
   @Post('totp/enroll')
   async enrollTotp(@Req() req: any) {
-    return this.mfa.enrollTotpForUser({ id: req.user.id, email: req.user.email });
+    const result = await this.mfa.enrollTotpForUser({ id: req.user.id, email: req.user.email });
+    await this.security.recordEvent({
+      type: SecurityEventType.MFA_ENROLL,
+      userId: req.user.id,
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers?.['user-agent'] ?? null,
+      success: true,
+      metadata: { method: 'totp', methodId: result.methodId },
+    });
+    return result;
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Post('totp/confirm')
   async confirmTotp(@Req() req: any, @Body() dto: ConfirmTotpDto) {
-    return { ok: await this.mfa.confirmTotpEnrollment(req.user.id, dto.methodId, dto.code) };
+    const ok = await this.mfa.confirmTotpEnrollment(req.user.id, dto.methodId, dto.code);
+    await this.security.recordEvent({
+      type: SecurityEventType.MFA_ENROLL,
+      userId: req.user.id,
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers?.['user-agent'] ?? null,
+      success: ok,
+      metadata: { method: 'totp', action: 'confirm', methodId: dto.methodId },
+    });
+    return { ok };
   }
 
-  @Post('totp/enable')
-  async enableTotp(@Body() dto: EnableTotpDto) {
-    // in real app, resolve user from DB (use IdentityService)
-    const user = { id: dto.userId } as any;
-    return this.mfa.enableTOTPForUser(user);
-  }
-
-  @Post('totp/verify')
-  async verifyTotp(@Body() dto: VerifyTotpDto) {
-    return { ok: await this.mfa.verifyTOTP(dto.methodId, dto.code) };
-  }
-
-  @Post('sms/initiate')
-  async initiateSms(@Body() dto: InitiateSmsDto) {
-    const user = { id: dto.userId } as any;
-    return this.mfa.initiateSMSChallenge(user, dto.phone);
-  }
-
-  @Post('challenge/:id/verify')
-  async verify(@Param('id') id: string, @Body() dto: VerifyChallengeDto) {
-    return { ok: await this.mfa.verifyChallenge(id, dto.code) };
-  }
+  // Intentionally removed legacy/demo endpoints that accepted `userId` directly.
+  // Keep only authenticated endpoints (JWT) to avoid insecure flows.
 }

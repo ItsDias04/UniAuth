@@ -38,27 +38,39 @@ export class SecurityService {
   }
 
   async isMfaRequiredForLogin(userId: string, ip?: string): Promise<boolean> {
-    // Simple rule: check AccessPolicy entries; if any policy requires MFA on new IP, return true.
     const policies = await this.accessPolicyRepo.find();
-    // naive check — in real system, determine if IP is new for the user
-    for (const p of policies) {
-      if (p.requireMfaAlways) return true;
-      if (p.requireMfaOnNewIp) {
-        // TODO: check whether ip is new for user
-        return true;
-      }
-    }
-    return false;
+    if (policies.some((p) => p.requireMfaAlways)) return true;
+
+    const newIpPolicyEnabled = policies.some((p) => p.requireMfaOnNewIp);
+    if (!newIpPolicyEnabled) return false;
+    if (!ip) return true;
+
+    const lastSuccess = await this.eventsRepo.findOne({
+      where: { type: SecurityEventType.LOGIN, userId, success: true },
+      order: { createdAt: 'DESC' },
+    });
+
+    if (!lastSuccess?.ipAddress) return true;
+    return lastSuccess.ipAddress !== ip;
   }
 
-  validatePasswordAgainstPolicy(password: string, policy?: PasswordPolicyEntity): boolean {
-    const p = policy || (this.passwordPolicyRepo.findOneBy({}) as unknown as PasswordPolicyEntity);
-    if (!p) return true;
-    if (password.length < p.minLength) return false;
-    if (p.requireUppercase && !/[A-Z]/.test(password)) return false;
-    if (p.requireNumbers && !/[0-9]/.test(password)) return false;
-    if (p.requireSpecial && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) return false;
+  validatePasswordAgainstPolicy(password: string, policy?: PasswordPolicyEntity | null): boolean {
+    if (!policy) return true;
+    if (password.length < policy.minLength) return false;
+    if (policy.requireUppercase && !/[A-Z]/.test(password)) return false;
+    if (policy.requireNumbers && !/[0-9]/.test(password)) return false;
+    if (policy.requireSpecial && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) return false;
     return true;
+  }
+
+  async getActivePasswordPolicy(): Promise<PasswordPolicyEntity | null> {
+    // Simplest model: the newest policy is active.
+    return this.passwordPolicyRepo.findOne({ order: { createdAt: 'DESC' } as any });
+  }
+
+  async validatePasswordAgainstActivePolicy(password: string): Promise<boolean> {
+    const policy = await this.getActivePasswordPolicy();
+    return this.validatePasswordAgainstPolicy(password, policy);
   }
 
   async listEvents(limit = 100) {

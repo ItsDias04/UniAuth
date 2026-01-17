@@ -6,13 +6,12 @@ import { TOTPConfig } from './data/entities/totp-config.entity';
 import { BackupCode } from './data/entities/backup-code.entity';
 import { MFAChallenge } from './data/entities/mfa-challenge.entity';
 import { MfaController } from './infrastructure/controllers/mfa.controller';
-import { CqrsModule } from '@nestjs/cqrs';
-import { EnableTotpHandler } from './application/handlers/enable-totp.handler';
+import { SecurityModule } from '../security/security.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([MFAMethod, TOTPConfig, BackupCode, MFAChallenge]), CqrsModule],
+  imports: [TypeOrmModule.forFeature([MFAMethod, TOTPConfig, BackupCode, MFAChallenge]), SecurityModule],
   controllers: [MfaController],
-  providers: [MfaService, EnableTotpHandler],
+  providers: [MfaService],
   exports: [MfaService],
 })
 export class MfaModule {}

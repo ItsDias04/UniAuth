@@ -24,7 +24,7 @@ bootstrap();
 // идентификацияның қауіпсіз провайдерінің (Identity Provider) архитектурасын әзірлеу / 
 
 // Разработка архитектуры безопасного провайдера идентификации (Identity Provider) 
-// с поддержкой многофакторной аутентификации (MFA) для внешних информационных систем / 
+// с поддержкой многофакторной аутентификации (MFA) для внешних информационных систем 
 
 // Development of a secure Identity Provider architecture with Multi-Factor 
 // Authentication (MFA) support for external information systems
