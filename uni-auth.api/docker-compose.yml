@@ -7,11 +7,42 @@ services:
     ports:
       - "3000:3000"
     environment:
+      - NODE_ENV=development
       - PORT=3000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASS=postgres
+      - DB_NAME=unicauth
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - JWT_ACCESS_SECRET=dev_jwt_access_secret_change_me_in_production
+      - JWT_REFRESH_SECRET=dev_jwt_refresh_secret_change_me_in_production
+      - JWT_ACCESS_TTL=900
+      - JWT_REFRESH_TTL=604800
+      - CORS_ORIGIN=http://localhost:4200
     depends_on:
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: unicauth
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   redis:
@@ -23,4 +54,5 @@ services:
     restart: unless-stopped
 
 volumes:
+  postgres-data:
   redis-data:

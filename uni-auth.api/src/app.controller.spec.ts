@@ -15,8 +15,10 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return app info', () => {
+      const result = appController.getInfo();
+      expect(result).toHaveProperty('name', 'UniAuth Identity Provider');
+      expect(result).toHaveProperty('version', '1.0.0');
     });
   });
 });
