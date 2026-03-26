@@ -1,0 +1,78 @@
+.auth-shell {
+    width: 100%;
+    max-width: 38rem;
+    border-radius: 56px;
+    padding: 0.3rem;
+    background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%);
+}
+
+.auth-card {
+    border-radius: 53px;
+}
+
+.form-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.field-label {
+    color: var(--surface-900);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+:host-context(.app-dark) .field-label {
+    color: var(--surface-0);
+}
+
+.stepper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.step {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-200);
+    color: var(--text-color-secondary);
+    font-weight: 600;
+}
+
+.step.active {
+    background: var(--primary-color);
+    color: var(--primary-color-text);
+}
+
+.line {
+    height: 2px;
+    flex: 1;
+    background: var(--surface-200);
+}
+
+.line.active {
+    background: var(--primary-color);
+}
+
+.success-block {
+    display: grid;
+    gap: 0.75rem;
+    text-align: center;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}

@@ -1,0 +1,84 @@
+<app-floating-configurator />
+
+<div class="bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-screen overflow-hidden p-4">
+    <div class="flex flex-col items-center justify-center w-full">
+        <div class="auth-shell">
+            <div class="auth-card w-full bg-surface-0 dark:bg-surface-900 py-8 px-6 sm:px-10">
+                <div class="text-center mb-8">
+                    <div class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-2">UniAuth — Вход</div>
+                    <span class="text-muted-color font-medium">Шаг {{ step }} из 3</span>
+                </div>
+
+                <div class="stepper mb-6">
+                    <div class="step" [class.active]="step >= 1">1</div>
+                    <div class="line" [class.active]="step >= 2"></div>
+                    <div class="step" [class.active]="step >= 2">2</div>
+                    <div class="line" [class.active]="step >= 3"></div>
+                    <div class="step" [class.active]="step >= 3">3</div>
+                </div>
+
+                @if (infoMessage) {
+                    <p-message severity="info" [text]="infoMessage" styleClass="mb-4 w-full" />
+                }
+
+                @if (errorMessage) {
+                    <p-message severity="error" [text]="errorMessage" styleClass="mb-4 w-full" />
+                }
+
+                @if (step === 1) {
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="email" class="field-label">Email</label>
+                            <input pInputText id="email" type="email" placeholder="Адрес электронной почты" class="w-full" [(ngModel)]="email" />
+                        </div>
+
+                        <div class="field">
+                            <label for="password" class="field-label">Пароль</label>
+                            <p-password id="password" [(ngModel)]="password" placeholder="Пароль" [toggleMask]="true" [fluid]="true" [feedback]="false"></p-password>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-1 mb-3 gap-4 flex-wrap">
+                            <div class="flex items-center">
+                                <p-checkbox [(ngModel)]="rememberMe" id="rememberMe" binary class="mr-2"></p-checkbox>
+                                <label for="rememberMe">Запомнить меня</label>
+                            </div>
+                            <span class="font-medium text-primary cursor-pointer">Забыли пароль?</span>
+                        </div>
+
+                        <button pButton type="button" label="Продолжить" styleClass="w-full" [loading]="loading" (click)="onLogin()"></button>
+
+                        <div class="text-center mt-5">
+                            <span class="text-muted-color">Нет аккаунта? </span>
+                            <a routerLink="/auth/register" class="text-primary font-medium cursor-pointer">Зарегистрироваться</a>
+                        </div>
+                    </div>
+                }
+
+                @if (step === 2) {
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="mfaCode" class="field-label">Код из Email</label>
+                            <input pInputText id="mfaCode" type="text" maxlength="6" placeholder="123456" class="w-full" [(ngModel)]="mfaCode" />
+                        </div>
+
+                        <div class="actions">
+                            <button pButton type="button" severity="secondary" label="Назад" (click)="resetLoginFlow()" [disabled]="loading"></button>
+                            <button pButton type="button" label="Подтвердить MFA" [loading]="loading" (click)="onVerifyMfa()"></button>
+                        </div>
+                    </div>
+                }
+
+                @if (step === 3) {
+                    <div class="success-block">
+                        <i class="pi pi-check-circle text-primary text-5xl"></i>
+                        <h3 class="m-0">Вход выполнен успешно</h3>
+                        <p class="m-0 text-muted-color">Сессия активна. Можно перейти в консоль разработчика.</p>
+                        <div class="actions justify-center">
+                            <button pButton type="button" label="Перейти в консоль разработчика" (click)="goToDeveloperConsole()"></button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

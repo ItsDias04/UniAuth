@@ -4,18 +4,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-
-// Bounded Contexts
-import { IdentityModule } from './modules/identity/identity.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { MfaModule } from './modules/mfa/mfa.module';
-import { TokenModule } from './modules/token/token.module';
-import { SessionModule } from './modules/session/session.module';
-import { AuditModule } from './modules/audit/audit.module';
-import { ExternalSystemModule } from './modules/external-system/external-system.module';
+import { IamContextModule } from './contexts/iam/iam-context.module';
+import { SecurityContextModule } from './contexts/security/security-context.module';
+import { Oauth2ContextModule } from './contexts/oauth2/oauth2-context.module';
+import { AuditContextModule } from './contexts/audit/audit-context.module';
+import { AdminContextModule } from './contexts/admin/admin-context.module';
 
 // Guards
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { JwtStrategy } from './common/guards/jwt.strategy';
 import { RolesGuard } from './common/guards/roles.guard';
 
 @Module({
@@ -42,17 +39,16 @@ import { RolesGuard } from './common/guards/roles.guard';
     }),
 
     // Bounded Contexts (DDD Modules)
-    IdentityModule,
-    TokenModule,
-    AuthModule,
-    MfaModule,
-    SessionModule,
-    AuditModule,
-    ExternalSystemModule,
+    IamContextModule,
+    SecurityContextModule,
+    Oauth2ContextModule,
+    AuditContextModule,
+    AdminContextModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
+    JwtStrategy,
     // Global Guards
     {
       provide: APP_GUARD,

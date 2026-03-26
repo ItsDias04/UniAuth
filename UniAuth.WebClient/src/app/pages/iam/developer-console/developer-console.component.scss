@@ -1,0 +1,15 @@
+.console-page {
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+:host ::ng-deep .p-card {
+    max-width: 56rem;
+    margin: 0 auto;
+}
+
+.result {
+    background: var(--surface-100);
+    border-radius: 0.75rem;
+    padding: 1rem;
+}

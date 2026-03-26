@@ -1,0 +1,123 @@
+<app-floating-configurator />
+
+<div class="bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-screen overflow-hidden p-4">
+    <div class="flex flex-col items-center justify-center w-full">
+        <div class="auth-shell">
+            <div class="auth-card w-full bg-surface-0 dark:bg-surface-900 py-8 px-6 sm:px-10">
+                <div class="text-center mb-7">
+                    <div class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-2">UniAuth — Регистрация</div>
+                    <span class="text-muted-color font-medium">Шаг {{ currentStep }} из 3</span>
+                    <div class="mt-3">
+                        <a routerLink="/auth/login" class="text-primary font-medium cursor-pointer">Вернуться ко входу</a>
+                    </div>
+                </div>
+
+                <div class="stepper mb-6" *ngIf="!isCompleted">
+                    <div class="step" [class.active]="currentStep >= 1">1</div>
+                    <div class="line" [class.active]="currentStep >= 2"></div>
+                    <div class="step" [class.active]="currentStep >= 2">2</div>
+                    <div class="line" [class.active]="currentStep >= 3"></div>
+                    <div class="step" [class.active]="currentStep >= 3">3</div>
+                </div>
+
+                @if (currentStep > 1 && !isCompleted) {
+                    <div class="timer" [class.expired]="timerExpired">
+                        <span>Registration Timer:</span>
+                        <strong>{{ formattedTime }}</strong>
+                    </div>
+                }
+
+                @if (errorMessage) {
+                    <p-message severity="error" [text]="errorMessage" styleClass="mb-4 w-full" />
+                }
+
+                @if (infoMessage) {
+                    <p-message severity="success" [text]="infoMessage" styleClass="mb-4 w-full" />
+                }
+
+                @if (!isCompleted && currentStep === 1) {
+                    <form [formGroup]="initiateForm" (ngSubmit)="submitInitiate()" class="form-grid">
+                        <div class="field">
+                            <label for="login" class="field-label">Логин</label>
+                            <input id="login" type="text" pInputText formControlName="login" class="w-full" />
+                        </div>
+
+                        <div class="field">
+                            <div ><label for="password" class="field-label">Пароль</label>
+                            <p-password fluid="true" id="password" formControlName="password" [feedback]="false" [toggleMask]="true" styleClass="w-full"></p-password>
+</div><div>
+    <label for="confirmPassword" class="field-label">Подтверждение пароля</label>
+                            <p-password fluid="true" id="confirmPassword" formControlName="confirmPassword" [feedback]="false" [toggleMask]="true" styleClass="w-full"></p-password>
+</div>
+                            
+                        </div>
+
+                        <div class="form-row">
+                            <div class="field">
+                                <label for="firstName" class="field-label">Имя</label>
+                                <input id="firstName" type="text" pInputText formControlName="firstName" class="w-full" />
+                            </div>
+
+                            <div class="field">
+                                <label for="lastName" class="field-label">Фамилия</label>
+                                <input id="lastName" type="text" pInputText formControlName="lastName" class="w-full" />
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="phone" class="field-label">Телефон</label>
+                            <input id="phone" type="text" pInputText formControlName="phone" placeholder="+77015554433" class="w-full" />
+                        </div>
+
+                        <div class="field">
+                            <label for="email" class="field-label">Email</label>
+                            <input id="email" type="email" pInputText formControlName="email" class="w-full" />
+                        </div>
+
+                        <button pButton type="submit" label="Продолжить" styleClass="w-full mt-2" [loading]="isLoading"></button>
+                    </form>
+                }
+
+                @if (!isCompleted && currentStep === 2) {
+                    <form [formGroup]="emailForm" (ngSubmit)="submitEmailVerification()" class="form-grid">
+                        <div class="field">
+                            <label for="emailCode" class="field-label">Код из Email</label>
+                            <input id="emailCode" type="text" pInputText formControlName="emailCode" maxlength="6" class="w-full" placeholder="123456" />
+                        </div>
+
+                        <div class="actions">
+                            <button pButton type="button" severity="secondary" label="Начать заново" (click)="resetFlow()" [disabled]="isLoading"></button>
+                            <button pButton type="submit" label="Подтвердить Email" [loading]="isLoading" [disabled]="timerExpired"></button>
+                        </div>
+                    </form>
+                }
+
+                @if (!isCompleted && currentStep === 3) {
+                    <form [formGroup]="whatsappForm" (ngSubmit)="submitWhatsAppVerification()" class="form-grid">
+                        <div class="field">
+                            <label for="whatsAppCode" class="field-label">Код из WhatsApp</label>
+                            <input id="whatsAppCode" type="text" pInputText formControlName="whatsAppCode" maxlength="6" class="w-full" placeholder="654321" />
+                        </div>
+
+                        <div class="actions">
+                            <button pButton type="button" severity="secondary" label="Начать заново" (click)="resetFlow()" [disabled]="isLoading"></button>
+                            <button pButton type="submit" label="Завершить регистрацию" [loading]="isLoading" [disabled]="timerExpired"></button>
+                        </div>
+                    </form>
+                }
+
+                @if (isCompleted) {
+                    <div class="success-block text-center">
+                        <i class="pi pi-check-circle text-primary text-5xl mb-2"></i>
+                        <h3 class="text-2xl m-0">Регистрация завершена</h3>
+                        <p class="text-muted-color m-0">Аккаунт успешно создан. Теперь можно войти в систему.</p>
+                        <div class="actions justify-center mt-2">
+                            <a pButton routerLink="/auth/login" label="К странице входа"></a>
+                            <button pButton type="button" severity="secondary" label="Новая регистрация" (click)="resetFlow()"></button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
