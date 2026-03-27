@@ -36,15 +36,14 @@ export class CreateClientApplicationHandler
       throw new BadRequestException('ownerUserId is required');
     }
 
-    if (!command.name?.trim() || !command.redirectRoute?.trim()) {
-      throw new BadRequestException('name and redirectRoute are required');
+    if (!command.name?.trim()) {
+      throw new BadRequestException('name is required');
     }
 
     const application = ClientApplication.create({
       id: randomUUID(),
       ownerUserId: command.ownerUserId.trim(),
       name: command.name.trim(),
-      redirectRoute: command.redirectRoute.trim(),
     });
 
     await this.clientApplicationRepository.save(application);
@@ -54,6 +53,7 @@ export class CreateClientApplicationHandler
       application.ownerUserId,
       application.name,
       application.redirectRoute,
+      application.status,
     );
   }
 }

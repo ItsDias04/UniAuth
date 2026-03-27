@@ -3,6 +3,7 @@ export const EXTERNAL_REDIRECT_TOKEN_VERIFIER = Symbol(
 );
 
 export interface ExternalRedirectTokenValidationResult {
+  userId: string;
   applicationId: string;
   redirectRoute: string;
 }

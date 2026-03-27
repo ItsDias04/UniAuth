@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Inject,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,6 +9,7 @@ import {
   ICommandHandler as NestCommandHandler,
 } from '@nestjs/cqrs';
 import { randomBytes } from 'crypto';
+import { lookup } from 'dns/promises';
 import { ICommandHandler } from '../../../../common/cqrs';
 import {
   RequestIpOwnershipVerificationCommand,
@@ -46,8 +48,8 @@ export class RequestIpOwnershipVerificationHandler
   async execute(
     command: RequestIpOwnershipVerificationCommand,
   ): Promise<RequestIpOwnershipVerificationCommandOutput> {
-    if (!command.applicationId?.trim() || !command.ipAddress?.trim()) {
-      throw new BadRequestException('applicationId and ipAddress are required');
+    if (!command.actorUserId?.trim() || !command.applicationId?.trim()) {
+      throw new BadRequestException('actorUserId and applicationId are required');
     }
 
     const application = await this.clientApplicationRepository.findById(
@@ -58,13 +60,23 @@ export class RequestIpOwnershipVerificationHandler
       throw new NotFoundException('Application not found');
     }
 
+    if (application.ownerUserId !== command.actorUserId) {
+      throw new ForbiddenException('You are not allowed to verify IP for this application');
+    }
+
+    if (!application.redirectRoute) {
+      throw new BadRequestException('Application redirectRoute is not configured');
+    }
+
+    const expectedIp = await resolveRouteIp(application.redirectRoute);
+
     const token = randomBytes(24).toString('hex');
 
     await this.redisRepository.saveIpVerificationToken(
       {
         token,
         applicationId: application.id,
-        expectedIp: normalizeIp(command.ipAddress),
+        expectedIp: normalizeIp(expectedIp),
       },
       this.ttlSeconds,
     );
@@ -74,6 +86,23 @@ export class RequestIpOwnershipVerificationHandler
       this.ttlSeconds,
       'Call public confirmation endpoint from declared IP with this token',
     );
+  }
+}
+
+async function resolveRouteIp(redirectRoute: string): Promise<string> {
+  let hostname: string;
+
+  try {
+    hostname = new URL(redirectRoute).hostname;
+  } catch {
+    throw new BadRequestException('Application redirectRoute is invalid URL');
+  }
+
+  try {
+    const resolved = await lookup(hostname);
+    return resolved.address;
+  } catch {
+    throw new BadRequestException('Unable to resolve redirectRoute host to IP');
   }
 }
 

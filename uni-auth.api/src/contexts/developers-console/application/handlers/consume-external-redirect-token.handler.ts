@@ -39,6 +39,7 @@ export class ConsumeExternalRedirectTokenHandler
     }
 
     return new ConsumeExternalRedirectTokenOutput(
+      state.userId,
       state.applicationId,
       state.redirectRoute,
       'Redirect token is valid and consumed',

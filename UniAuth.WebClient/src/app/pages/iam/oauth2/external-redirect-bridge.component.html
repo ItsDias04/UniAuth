@@ -1,0 +1,15 @@
+<div class="bridge-page bg-surface-50 dark:bg-surface-950">
+    <p-card header="OAuth2 External Redirect" subheader="Автоматическая выдача токена и redirect">
+        @if (errorMessage) {
+            <p-message severity="error" [text]="errorMessage" styleClass="mb-3 w-full" />
+        }
+
+        @if (infoMessage) {
+            <p-message severity="info" [text]="infoMessage" styleClass="mb-3 w-full" />
+        }
+
+        <p class="m-0 text-muted-color mb-3">Проверяется токен пользователя, затем externalToken, затем выдается временный code и выполняется redirect.</p>
+
+        <button pButton type="button" label="Повторить" [loading]="loading" (click)="handleFlow()"></button>
+    </p-card>
+</div>

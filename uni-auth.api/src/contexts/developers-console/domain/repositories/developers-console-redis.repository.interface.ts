@@ -10,6 +10,7 @@ export interface IpVerificationTokenState {
 
 export interface ExternalRedirectTokenState {
   token: string;
+  userId: string;
   applicationId: string;
   redirectRoute: string;
 }

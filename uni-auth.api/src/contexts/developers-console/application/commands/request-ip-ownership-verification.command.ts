@@ -14,7 +14,7 @@ export class RequestIpOwnershipVerificationCommand
   implements ICommandInput<RequestIpOwnershipVerificationCommandOutput>
 {
   constructor(
+    public readonly actorUserId: string,
     public readonly applicationId: string,
-    public readonly ipAddress: string,
   ) {}
 }

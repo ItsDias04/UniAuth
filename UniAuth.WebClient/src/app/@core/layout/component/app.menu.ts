@@ -21,6 +21,16 @@ export class AppMenu {
     ngOnInit() {
         this.model = [
             {
+                label: 'Консоль разработчика',
+                items: [
+                    {
+                        label: 'Приложения',
+                        icon: 'pi pi-fw pi-id-card',
+                        routerLink: ['/developer-console/applications']
+                    }
+                ]
+            },
+            {
                 label: 'Главная',
                 items: [{ label: 'Дашборд', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
             },

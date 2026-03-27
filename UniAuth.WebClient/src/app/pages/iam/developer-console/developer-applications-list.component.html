@@ -1,0 +1,33 @@
+<div class="console-page bg-surface-50 dark:bg-surface-950">
+    <div class="content-wrap">
+        <p-card header="Консоль разработчика" subheader="Приложения">
+            @if (errorMessage) {
+                <p-message severity="error" [text]="errorMessage" styleClass="mb-3 w-full" />
+            }
+
+            @if (successMessage) {
+                <p-message severity="success" [text]="successMessage" styleClass="mb-3 w-full" />
+            }
+
+            <div class="filters">
+                <label>Мои приложения</label>
+                <button pButton type="button" label="Загрузить приложения" [loading]="loading" (click)="loadApplications()"></button>
+            </div>
+
+            <div class="create-form">
+                <h4>Создать приложение</h4>
+                <input pInputText [(ngModel)]="appName" placeholder="Название приложения" />
+                <button pButton type="button" label="Создать" [loading]="creating" (click)="createApplication()"></button>
+            </div>
+        </p-card>
+
+        <div class="cards-grid" *ngIf="applications.length > 0">
+            <p-card *ngFor="let app of applications" [header]="app.name" [subheader]="app.applicationId">
+                <p class="m-0 mb-2"><strong>Статус:</strong> {{ statusLabel(app.status) }}</p>
+                <p class="m-0 mb-2"><strong>Redirect:</strong> {{ app.redirectRoute }}</p>
+                <p class="m-0 mb-2"><strong>Verified IPs:</strong> {{ app.verifiedIps.length }}</p>
+                <a pButton [routerLink]="['/developer-console/applications', app.applicationId]" label="Открыть"></a>
+            </p-card>
+        </div>
+    </div>
+</div>

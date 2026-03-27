@@ -1,0 +1,31 @@
+.details-page {
+    min-height: 100vh;
+    padding: 1.5rem;
+}
+
+.content-wrap {
+    max-width: 72rem;
+    margin: 0 auto;
+    display: grid;
+    gap: 1rem;
+}
+
+.action-grid {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.result-box {
+    background: var(--surface-100);
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+}
+
+.result-box pre {
+    margin: 0.5rem 0 0;
+    background: var(--surface-200);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+}

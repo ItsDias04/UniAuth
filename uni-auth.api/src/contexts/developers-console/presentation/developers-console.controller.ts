@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -20,14 +21,18 @@ import {
   ConsumeExternalRedirectTokenDto,
   CreateClientApplicationDto,
   IssueExternalRedirectTokenDto,
-  RequestIpOwnershipVerificationDto,
+  UpdateClientApplicationSettingsDto,
 } from './dto/developers-console.dto';
 import { CreateClientApplicationCommand } from '../application/commands/create-client-application.command';
 import { RequestIpOwnershipVerificationCommand } from '../application/commands/request-ip-ownership-verification.command';
 import { ConfirmIpOwnershipCommand } from '../application/commands/confirm-ip-ownership.command';
 import { IssueExternalRedirectTokenCommand } from '../application/commands/issue-external-redirect-token.command';
 import { ConsumeExternalRedirectTokenQuery } from '../application/queries/consume-external-redirect-token.query';
+import { GetOwnerApplicationsQuery } from '../application/queries/get-owner-applications.query';
+import { GetApplicationByIdQuery } from '../application/queries/get-application-by-id.query';
+import { UpdateClientApplicationSettingsCommand } from '../application/commands/update-client-application-settings.command';
 import { Public } from '../../../common/decorators/public.decorator';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 
 @ApiTags('Developers Console')
 @Controller('developers-console')
@@ -37,37 +42,82 @@ export class DevelopersConsoleController {
     private readonly queryBus: QueryBus,
   ) {}
 
-  @Public()
+  @Get('applications')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get current user applications' })
+  @ApiOkResponse({ description: 'Applications list returned successfully' })
+  async getOwnerApplications(@CurrentUser('sub') userId: string) {
+    return this.queryBus.execute(
+      new GetOwnerApplicationsQuery(userId),
+    );
+  }
+
+  @Get('applications/:applicationId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get current user application details by id' })
+  @ApiOkResponse({ description: 'Application details returned successfully' })
+  async getApplicationById(
+    @CurrentUser('sub') userId: string,
+    @Param('applicationId') applicationId: string,
+  ) {
+    return this.queryBus.execute(
+      new GetApplicationByIdQuery(userId, applicationId),
+    );
+  }
+
   @Post('applications')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create developer application' })
+  @ApiOperation({ summary: 'Create developer application (name only)' })
   @ApiBody({ type: CreateClientApplicationDto })
   @ApiOkResponse({ description: 'Application created successfully' })
-  async createApplication(@Body() dto: CreateClientApplicationDto) {
+  async createApplication(
+    @CurrentUser('sub') userId: string,
+    @Body() dto: CreateClientApplicationDto,
+  ) {
     return this.commandBus.execute(
       new CreateClientApplicationCommand(
-        dto.ownerUserId,
+        userId,
+        dto.name,
+      ),
+    );
+  }
+
+  @Post('applications/:applicationId/settings')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update application settings (name and redirect route)' })
+  @ApiBody({ type: UpdateClientApplicationSettingsDto })
+  @ApiOkResponse({ description: 'Application settings updated successfully' })
+  async updateApplicationSettings(
+    @CurrentUser('sub') userId: string,
+    @Param('applicationId') applicationId: string,
+    @Body() dto: UpdateClientApplicationSettingsDto,
+  ) {
+    return this.commandBus.execute(
+      new UpdateClientApplicationSettingsCommand(
+        userId,
+        applicationId,
         dto.name,
         dto.redirectRoute,
       ),
     );
   }
 
-  @Public()
   @Post('applications/:applicationId/ip/request-verification')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Generate IP ownership verification token' })
-  @ApiBody({ type: RequestIpOwnershipVerificationDto })
+  @ApiOperation({ summary: 'Generate IP ownership verification token using redirectRoute host IP' })
   @ApiOkResponse({
     description:
       'Token returned; third-party site must call confirmation endpoint from declared IP',
   })
   async requestIpVerification(
+    @CurrentUser('sub') userId: string,
     @Param('applicationId') applicationId: string,
-    @Body() dto: RequestIpOwnershipVerificationDto,
   ) {
     return this.commandBus.execute(
-      new RequestIpOwnershipVerificationCommand(applicationId, dto.ipAddress),
+      new RequestIpOwnershipVerificationCommand(
+        userId,
+        applicationId,
+      ),
     );
   }
 
@@ -87,15 +137,17 @@ export class DevelopersConsoleController {
     );
   }
 
-  @Public()
   @Post('external/redirect-token')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Issue unique redirect token for external service (TTL 30 minutes)' })
   @ApiBody({ type: IssueExternalRedirectTokenDto })
   @ApiOkResponse({ description: 'Unique token issued and appended redirect URL returned' })
-  async issueExternalRedirectToken(@Body() dto: IssueExternalRedirectTokenDto) {
+  async issueExternalRedirectToken(
+    @CurrentUser('sub') userId: string,
+    @Body() dto: IssueExternalRedirectTokenDto,
+  ) {
     return this.commandBus.execute(
-      new IssueExternalRedirectTokenCommand(dto.applicationId),
+      new IssueExternalRedirectTokenCommand(userId, dto.applicationId),
     );
   }
 

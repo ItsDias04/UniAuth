@@ -18,6 +18,7 @@ export class ClientApplicationRepository implements IClientApplicationRepository
       ownerUserId: application.ownerUserId,
       name: application.name,
       redirectRoute: application.redirectRoute,
+      status: application.status,
       verifiedIps: application.verifiedIps,
     });
   }
@@ -31,6 +32,7 @@ export class ClientApplicationRepository implements IClientApplicationRepository
       ownerUserId: row.ownerUserId,
       name: row.name,
       redirectRoute: row.redirectRoute,
+      status: (row.status as 'draft' | 'active' | 'inactive') || 'draft',
       verifiedIps: row.verifiedIps || [],
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -49,6 +51,7 @@ export class ClientApplicationRepository implements IClientApplicationRepository
         ownerUserId: row.ownerUserId,
         name: row.name,
         redirectRoute: row.redirectRoute,
+        status: (row.status as 'draft' | 'active' | 'inactive') || 'draft',
         verifiedIps: row.verifiedIps || [],
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,

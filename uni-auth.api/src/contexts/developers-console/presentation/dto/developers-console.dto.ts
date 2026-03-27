@@ -1,28 +1,32 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsIP, IsString, IsUrl, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsOptional,
+  IsString,
+  IsUrl,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class CreateClientApplicationDto {
-  @ApiProperty({ example: 'user-123' })
-  @IsString()
-  ownerUserId: string;
-
   @ApiProperty({ example: 'My Analytics App' })
   @IsString()
   @MinLength(2)
   @MaxLength(120)
   name: string;
-
-  @ApiProperty({ example: 'https://partner.site/callback' })
-  @IsString()
-  @IsUrl()
-  redirectRoute: string;
 }
 
-export class RequestIpOwnershipVerificationDto {
-  @ApiProperty({ example: '203.0.113.15' })
+export class UpdateClientApplicationSettingsDto {
+  @ApiPropertyOptional({ example: 'My Analytics App v2' })
+  @IsOptional()
   @IsString()
-  @IsIP()
-  ipAddress: string;
+  @MinLength(2)
+  @MaxLength(120)
+  name?: string;
+
+  @ApiPropertyOptional({ example: 'https://partner.site/callback' })
+  @IsOptional()
+  @IsUrl()
+  redirectRoute?: string;
 }
 
 export class ConfirmIpOwnershipDto {

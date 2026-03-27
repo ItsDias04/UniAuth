@@ -98,7 +98,7 @@ export class LoginComponent {
     }
 
     goToDeveloperConsole(): void {
-        this.router.navigate(['/developer-console']);
+        this.router.navigate(['/developer-console/applications']);
     }
 
     resetLoginFlow(): void {

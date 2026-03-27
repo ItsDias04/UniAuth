@@ -1,5 +1,6 @@
 import {
   Body,
+  BadRequestException,
   Controller,
   HttpCode,
   HttpStatus,
@@ -78,5 +79,60 @@ export class Oauth2SsoController {
     return this.queryBus.execute(
       new ExchangeCodeForProfileQuery(dto.authorizationCode),
     );
+  }
+
+  @Public()
+  @Post('validate-temporary-token')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Validate temporary authorization code and return user payload' })
+  @ApiBody({ type: ExchangeCodeForProfileDto })
+  @ApiOkResponse({
+    description: 'Validation result for external application sign-in/up flow',
+    schema: {
+      examples: {
+        valid: {
+          value: {
+            valid: true,
+            user: {
+              userId: '55be7f0f-e651-47f2-aaf8-a6f9e3f923ba',
+              clientId: 'developer-console-web',
+              email: 'john.doe@example.com',
+              firstName: 'John',
+              lastName: 'Doe',
+              avatarUrl: null,
+            },
+          },
+        },
+        invalid: {
+          value: {
+            valid: false,
+            reason: 'Authorization code is invalid or expired',
+          },
+        },
+      },
+    },
+  })
+  async validateTemporaryToken(@Body() dto: ExchangeCodeForProfileDto) {
+    try {
+      const user = await this.queryBus.execute(
+        new ExchangeCodeForProfileQuery(dto.authorizationCode),
+      );
+
+      return {
+        valid: true,
+        user,
+      };
+    } catch (error) {
+      const message =
+        error instanceof BadRequestException
+          ? (error.getResponse() as { message?: string }).message ||
+            'Authorization code is invalid or expired'
+          : 'Authorization code is invalid or expired';
+
+      return {
+        valid: false,
+        reason: Array.isArray(message) ? message.join(' ') : message,
+      };
+    }
   }
 }

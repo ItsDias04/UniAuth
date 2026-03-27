@@ -1,0 +1,9 @@
+.bridge-page {
+    min-height: 100vh;
+    padding: 1.5rem;
+}
+
+:host ::ng-deep .p-card {
+    max-width: 56rem;
+    margin: 0 auto;
+}

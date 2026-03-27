@@ -16,16 +16,24 @@ import { RequestIpOwnershipVerificationHandler } from './application/handlers/re
 import { ConfirmIpOwnershipHandler } from './application/handlers/confirm-ip-ownership.handler';
 import { IssueExternalRedirectTokenHandler } from './application/handlers/issue-external-redirect-token.handler';
 import { ConsumeExternalRedirectTokenHandler } from './application/handlers/consume-external-redirect-token.handler';
+import { GetOwnerApplicationsHandler } from './application/handlers/get-owner-applications.handler';
+import { GetApplicationByIdHandler } from './application/handlers/get-application-by-id.handler';
+import { UpdateClientApplicationSettingsHandler } from './application/handlers/update-client-application-settings.handler';
 import { DevelopersConsoleController } from './presentation/developers-console.controller';
 
 const CommandHandlers = [
   CreateClientApplicationHandler,
+  UpdateClientApplicationSettingsHandler,
   RequestIpOwnershipVerificationHandler,
   ConfirmIpOwnershipHandler,
   IssueExternalRedirectTokenHandler,
 ];
 
-const QueryHandlers = [ConsumeExternalRedirectTokenHandler];
+const QueryHandlers = [
+  ConsumeExternalRedirectTokenHandler,
+  GetOwnerApplicationsHandler,
+  GetApplicationByIdHandler,
+];
 
 @Module({
   imports: [

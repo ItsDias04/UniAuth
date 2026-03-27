@@ -22,6 +22,9 @@ export class ClientApplicationOrmEntity {
   @Column({ type: 'varchar', length: 1000, name: 'redirect_route' })
   redirectRoute: string;
 
+  @Column({ type: 'varchar', length: 24, default: 'draft' })
+  status: string;
+
   @Column({ type: 'jsonb', name: 'verified_ips', default: () => "'[]'" })
   verifiedIps: string[];
 

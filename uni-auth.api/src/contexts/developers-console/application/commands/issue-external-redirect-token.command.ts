@@ -11,5 +11,8 @@ export class IssueExternalRedirectTokenCommandOutput implements ICommandOutput {
 export class IssueExternalRedirectTokenCommand
   implements ICommandInput<IssueExternalRedirectTokenCommandOutput>
 {
-  constructor(public readonly applicationId: string) {}
+  constructor(
+    public readonly actorUserId: string,
+    public readonly applicationId: string,
+  ) {}
 }

@@ -54,6 +54,12 @@ export class GenerateAuthCodeHandler
       );
     }
 
+    if (tokenValidation.userId !== command.userId) {
+      throw new BadRequestException(
+        'External token does not belong to current user',
+      );
+    }
+
     if (tokenValidation.redirectRoute !== command.redirectUri) {
       throw new BadRequestException(
         'External token redirect route mismatch',

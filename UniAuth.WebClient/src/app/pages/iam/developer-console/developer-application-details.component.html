@@ -1,0 +1,101 @@
+<div class="details-page bg-surface-50 dark:bg-surface-950">
+    <div class="content-wrap">
+        <a pButton routerLink="/developer-console/applications" icon="pi pi-arrow-left" label="К списку приложений" severity="secondary"></a>
+
+        @if (errorMessage) {
+            <p-message severity="error" [text]="errorMessage" styleClass="mb-3 w-full" />
+        }
+
+        <p-card *ngIf="application" [header]="application.name" [subheader]="application.applicationId">
+            <p class="m-0 mb-2"><strong>Статус:</strong> {{ application.status }}</p>
+            <p class="m-0 mb-2"><strong>Redirect:</strong> {{ application.redirectRoute }}</p>
+            <p class="m-0 mb-4"><strong>Verified IPs:</strong> {{ application.verifiedIps.join(', ') || 'нет' }}</p>
+
+            <div class="action-grid mb-4">
+                <h4 class="m-0">Маршрут редиректа приложения</h4>
+                <input pInputText [(ngModel)]="editRedirectRoute" placeholder="https://0.0.0.0/route/callback" />
+                      </div>
+
+
+            <div class="action-grid">
+                <h4 class="m-0">Проверка владения IP</h4>
+                <button pButton type="button" label="Запросить verification token" [loading]="actionLoading" (click)="requestIpVerification()"></button>
+
+                @if (ipVerification) {
+                    <div class="result-box">
+                        <div><strong>Token:</strong> {{ ipVerification.token }}</div>
+                        <div><strong>TTL:</strong> {{ ipVerification.expiresInSeconds }} сек</div>
+                        <div><strong>Hint:</strong> {{ ipVerification.confirmationHint }}</div>
+                    </div>
+                }
+            </div>
+
+            <div class="action-grid mt-4">
+                <h4 class="m-0">Документация: внешний redirect token</h4>
+                <p class="m-0 text-muted-color"><strong>Flow:</strong> 1) Верификация IP по redirectRoute → 2) Генерация externalToken на пользователя → 3) Авторизация пользователя в UniAuth → 4) Получение временного code и redirect на внешний маршрут → 5) Внешняя система валидирует code и использует user payload для login/register.</p>
+                <p class="m-0 text-muted-color">Путь на фронте для авто-получения и проверки токена: <strong>/oauth2/external-redirect</strong>.</p>
+                <p class="m-0 text-muted-color">Query параметры: <strong>applicationId</strong>, <strong>redirectUri</strong>, опционально <strong>state</strong> и <strong>externalToken</strong>.</p>
+                <p class="m-0 text-muted-color">Если externalToken отсутствует или истек, компонент автоматически запросит новый, получит временный code и выполнит редирект.</p>
+                                <a pButton [routerLink]="['/oauth2/external-redirect']" [queryParams]="{ applicationId: application.applicationId, redirectUri: application.redirectRoute }" label="UA Перейти через UniAuth" icon="pi pi-shield" severity="secondary"></a>
+
+                                <div class="result-box">
+                                        <div><strong>Пример запроса (получить временный code и redirect)</strong></div>
+                                        <pre>POST /api/v1/oauth2/sso/authorize
+Authorization: Bearer &lt;access_token&gt;
+&#123;
+    "clientId": "&lt;applicationId&gt;",
+    "redirectUri": "&lt;redirectUri&gt;",
+    "externalToken": "&lt;externalToken&gt;",
+    "state": "opaque-state"
+&#125;</pre>
+                                        <pre>&#123;
+    "authorizationCode": "a1b2c3...",
+    "expiresInSeconds": 120,
+    "redirectUrl": "&lt;redirectUri&gt;?code=a1b2c3...&state=opaque-state"
+&#125;</pre>
+                                </div>
+
+                                <div class="result-box">
+                                        <div><strong>Пример запроса (валидность временного токена/code)</strong></div>
+                                        <pre>POST /api/v1/oauth2/sso/validate-temporary-token
+&#123;
+    "authorizationCode": "a1b2c3..."
+&#125;</pre>
+                                        <pre>// valid
+&#123;
+    "valid": true,
+    "user": &#123;
+        "userId": "55be7f0f-e651-47f2-aaf8-a6f9e3f923ba",
+        "clientId": "&lt;applicationId&gt;",
+        "email": "john.doe@example.com",
+        "firstName": "John",
+        "lastName": "Doe",
+        "avatarUrl": null
+    &#125;
+&#125;
+
+// invalid
+&#123;
+    "valid": false,
+    "reason": "Authorization code is invalid or expired"
+&#125;</pre>
+                                </div>
+            </div>
+
+            <div class="action-grid mt-4">
+                <h4 class="m-0">Внешний redirect token</h4>
+                <button pButton type="button" label="Сгенерировать redirect token" [loading]="actionLoading" (click)="issueRedirectToken()"></button>
+
+                @if (redirectToken; as token) {
+                    <div class="result-box">
+                        <div><strong>Token:</strong> {{ token.token }}</div>
+                        <div><strong>TTL:</strong> {{ token.expiresInSeconds }} сек</div>
+                        <div class="break-all"><strong>Redirect URL:</strong> {{ token.redirectUrl }}</div>
+                    </div>
+                }
+            </div>
+        </p-card>
+
+        <p-card *ngIf="!application && !loading" header="Приложение не найдено"></p-card>
+    </div>
+</div>

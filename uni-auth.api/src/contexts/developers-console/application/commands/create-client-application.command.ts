@@ -6,6 +6,7 @@ export class CreateClientApplicationCommandOutput implements ICommandOutput {
     public readonly ownerUserId: string,
     public readonly name: string,
     public readonly redirectRoute: string,
+    public readonly status: string,
   ) {}
 }
 
@@ -15,6 +16,5 @@ export class CreateClientApplicationCommand
   constructor(
     public readonly ownerUserId: string,
     public readonly name: string,
-    public readonly redirectRoute: string,
   ) {}
 }

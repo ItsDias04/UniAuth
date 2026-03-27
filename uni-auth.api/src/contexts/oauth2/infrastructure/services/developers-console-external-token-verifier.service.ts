@@ -24,6 +24,7 @@ export class DevelopersConsoleExternalTokenVerifierService
     >(new ConsumeExternalRedirectTokenQuery(token));
 
     return {
+      userId: output.userId,
       applicationId: output.applicationId,
       redirectRoute: output.redirectRoute,
     };
