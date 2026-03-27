@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import {
   CLIENT_APPLICATION_REPOSITORY,
 } from './domain/repositories/client-application.repository.interface';
-import { InMemoryClientApplicationRepository } from './infrastructure/persistence/in-memory-client-application.repository';
+import { ClientApplicationRepository } from './infrastructure/persistence/client-application.repository';
+import { ClientApplicationOrmEntity } from './infrastructure/persistence/client-application.orm-entity';
 import {
   DEVELOPERS_CONSOLE_REDIS_REPOSITORY,
 } from './domain/repositories/developers-console-redis.repository.interface';
@@ -26,12 +28,16 @@ const CommandHandlers = [
 const QueryHandlers = [ConsumeExternalRedirectTokenHandler];
 
 @Module({
-  imports: [ConfigModule, CqrsModule],
+  imports: [
+    ConfigModule,
+    CqrsModule,
+    TypeOrmModule.forFeature([ClientApplicationOrmEntity]),
+  ],
   controllers: [DevelopersConsoleController],
   providers: [
     {
       provide: CLIENT_APPLICATION_REPOSITORY,
-      useClass: InMemoryClientApplicationRepository,
+      useClass: ClientApplicationRepository,
     },
     {
       provide: DEVELOPERS_CONSOLE_REDIS_REPOSITORY,
