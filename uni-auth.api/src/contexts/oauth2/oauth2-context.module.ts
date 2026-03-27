@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ConfigModule } from '@nestjs/config';
 import { IamContextModule } from '../iam/iam-context.module';
+import { DevelopersConsoleContextModule } from '../developers-console/developers-console-context.module';
 import {
 	IOAuthRedisRepository,
 	OAUTH_REDIS_REPOSITORY,
@@ -17,6 +18,11 @@ import {
 	OAUTH_CLIENT_VALIDATOR,
 } from './application/services/oauth-client-validator.interface';
 import { ConfigOAuthClientValidatorService } from './infrastructure/services/config-oauth-client-validator.service';
+import {
+	EXTERNAL_REDIRECT_TOKEN_VERIFIER,
+	IExternalRedirectTokenVerifier,
+} from './application/services/external-redirect-token-verifier.interface';
+import { DevelopersConsoleExternalTokenVerifierService } from './infrastructure/services/developers-console-external-token-verifier.service';
 import { GenerateAuthCodeHandler } from './application/handlers/generate-auth-code.handler';
 import { ExchangeCodeForProfileHandler } from './application/handlers/exchange-code-for-profile.handler';
 import { Oauth2SsoController } from './presentation/oauth2-sso.controller';
@@ -25,7 +31,12 @@ const CommandHandlers = [GenerateAuthCodeHandler];
 const QueryHandlers = [ExchangeCodeForProfileHandler];
 
 @Module({
-	imports: [ConfigModule, CqrsModule, IamContextModule],
+	imports: [
+		ConfigModule,
+		CqrsModule,
+		IamContextModule,
+		DevelopersConsoleContextModule,
+	],
 	controllers: [Oauth2SsoController],
 	providers: [
 		{
@@ -39,6 +50,10 @@ const QueryHandlers = [ExchangeCodeForProfileHandler];
 		{
 			provide: OAUTH_CLIENT_VALIDATOR,
 			useClass: ConfigOAuthClientValidatorService,
+		},
+		{
+			provide: EXTERNAL_REDIRECT_TOKEN_VERIFIER,
+			useClass: DevelopersConsoleExternalTokenVerifierService,
 		},
 		...CommandHandlers,
 		...QueryHandlers,

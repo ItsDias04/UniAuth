@@ -9,6 +9,7 @@ import { SecurityContextModule } from './contexts/security/security-context.modu
 import { Oauth2ContextModule } from './contexts/oauth2/oauth2-context.module';
 import { AuditContextModule } from './contexts/audit/audit-context.module';
 import { AdminContextModule } from './contexts/admin/admin-context.module';
+import { DevelopersConsoleContextModule } from './contexts/developers-console/developers-console-context.module';
 
 // Guards
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -44,6 +45,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     Oauth2ContextModule,
     AuditContextModule,
     AdminContextModule,
+    DevelopersConsoleContextModule,
   ],
   controllers: [AppController],
   providers: [

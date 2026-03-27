@@ -41,7 +41,12 @@ export class Oauth2SsoController {
     @Body() dto: GenerateSsoAuthCodeDto,
   ) {
     const output = await this.commandBus.execute(
-      new GenerateAuthCodeCommand(userId, dto.clientId, dto.redirectUri),
+      new GenerateAuthCodeCommand(
+        userId,
+        dto.clientId,
+        dto.redirectUri,
+        dto.externalToken,
+      ),
     );
 
     let redirectUrl: string | null = null;

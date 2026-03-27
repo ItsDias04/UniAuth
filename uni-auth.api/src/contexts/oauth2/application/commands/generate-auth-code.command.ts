@@ -18,5 +18,6 @@ export class GenerateAuthCodeCommand
     public readonly userId: string,
     public readonly clientId: string,
     public readonly redirectUri: string,
+    public readonly externalToken: string,
   ) {}
 }

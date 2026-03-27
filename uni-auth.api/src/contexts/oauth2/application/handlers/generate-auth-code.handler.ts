@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { BadRequestException, Inject } from '@nestjs/common';
 import {
   CommandHandler,
   ICommandHandler as NestCommandHandler,
@@ -19,6 +19,10 @@ import {
   IOAuthClientValidator,
   OAUTH_CLIENT_VALIDATOR,
 } from '../services/oauth-client-validator.interface';
+import {
+  EXTERNAL_REDIRECT_TOKEN_VERIFIER,
+  IExternalRedirectTokenVerifier,
+} from '../services/external-redirect-token-verifier.interface';
 
 @CommandHandler(GenerateAuthCodeCommand)
 export class GenerateAuthCodeHandler
@@ -33,11 +37,29 @@ export class GenerateAuthCodeHandler
     private readonly oauthRedisRepository: IOAuthRedisRepository,
     @Inject(OAUTH_CLIENT_VALIDATOR)
     private readonly oauthClientValidator: IOAuthClientValidator,
+    @Inject(EXTERNAL_REDIRECT_TOKEN_VERIFIER)
+    private readonly externalTokenVerifier: IExternalRedirectTokenVerifier,
   ) {}
 
   async execute(
     command: GenerateAuthCodeCommand,
   ): Promise<GenerateAuthCodeCommandOutput> {
+    const tokenValidation = await this.externalTokenVerifier.validateAndConsume(
+      command.externalToken,
+    );
+
+    if (tokenValidation.applicationId !== command.clientId) {
+      throw new BadRequestException(
+        'External token does not belong to provided clientId',
+      );
+    }
+
+    if (tokenValidation.redirectRoute !== command.redirectUri) {
+      throw new BadRequestException(
+        'External token redirect route mismatch',
+      );
+    }
+
     await this.oauthClientValidator.validate(
       command.clientId,
       command.redirectUri,

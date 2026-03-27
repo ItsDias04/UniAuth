@@ -11,6 +11,10 @@ export class GenerateSsoAuthCodeDto {
   @IsUrl()
   redirectUri: string;
 
+  @ApiProperty({ example: 'external-token-123' })
+  @IsString()
+  externalToken: string;
+
   @ApiPropertyOptional({ example: 'opaque-state-xyz' })
   @IsOptional()
   @IsString()

@@ -1,0 +1,44 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsIP, IsString, IsUrl, MaxLength, MinLength } from 'class-validator';
+
+export class CreateClientApplicationDto {
+  @ApiProperty({ example: 'user-123' })
+  @IsString()
+  ownerUserId: string;
+
+  @ApiProperty({ example: 'My Analytics App' })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(120)
+  name: string;
+
+  @ApiProperty({ example: 'https://partner.site/callback' })
+  @IsString()
+  @IsUrl()
+  redirectRoute: string;
+}
+
+export class RequestIpOwnershipVerificationDto {
+  @ApiProperty({ example: '203.0.113.15' })
+  @IsString()
+  @IsIP()
+  ipAddress: string;
+}
+
+export class ConfirmIpOwnershipDto {
+  @ApiProperty({ example: 'af973eb4d70f72f5751ff33f8d6260d9b58ec9e748df772d' })
+  @IsString()
+  token: string;
+}
+
+export class IssueExternalRedirectTokenDto {
+  @ApiProperty({ example: 'f0d8f1e4-59f7-454e-8a11-345b6f447d26' })
+  @IsString()
+  applicationId: string;
+}
+
+export class ConsumeExternalRedirectTokenDto {
+  @ApiProperty({ example: '6f31ae2b2e643e1329139bc30f008593ef06a4f9740f8e55' })
+  @IsString()
+  token: string;
+}
