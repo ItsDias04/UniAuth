@@ -20,6 +20,9 @@ import { GetOwnerApplicationsHandler } from './application/handlers/get-owner-ap
 import { GetApplicationByIdHandler } from './application/handlers/get-application-by-id.handler';
 import { UpdateClientApplicationSettingsHandler } from './application/handlers/update-client-application-settings.handler';
 import { DevelopersConsoleController } from './presentation/developers-console.controller';
+import { AddIpToApplicationHandler } from './application/handlers/add-ip-to-application.handler';
+import { LaunchApplicationToProductionHandler } from './application/handlers/launch-application-to-production.handler';
+import { ToggleApplicationStatusHandler } from './application/handlers/toggle-application-status.handler';
 
 const CommandHandlers = [
   CreateClientApplicationHandler,
@@ -27,6 +30,9 @@ const CommandHandlers = [
   RequestIpOwnershipVerificationHandler,
   ConfirmIpOwnershipHandler,
   IssueExternalRedirectTokenHandler,
+  AddIpToApplicationHandler,
+  LaunchApplicationToProductionHandler,
+  ToggleApplicationStatusHandler,
 ];
 
 const QueryHandlers = [

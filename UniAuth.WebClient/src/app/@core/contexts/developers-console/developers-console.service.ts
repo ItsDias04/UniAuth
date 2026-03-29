@@ -8,8 +8,9 @@ export interface DeveloperApplication {
     ownerUserId: string;
     name: string;
     redirectRoute: string;
-    status: 'draft' | 'active' | 'inactive';
-    verifiedIps: string[];
+    status: 'draft' | 'active' | 'inactive' | 'production';
+    ip: string;
+    ipIsVerified: boolean;
     createdAt: string;
     updatedAt?: string;
 }
@@ -27,7 +28,7 @@ export interface CreateApplicationResponse {
     ownerUserId: string;
     name: string;
     redirectRoute: string;
-    status: 'draft' | 'active' | 'inactive';
+    status: 'draft' | 'active' | 'inactive' | 'production';
 }
 
 export interface UpdateApplicationSettingsRequest {
@@ -39,7 +40,7 @@ export interface UpdateApplicationSettingsResponse {
     applicationId: string;
     name: string;
     redirectRoute: string;
-    status: 'draft' | 'active' | 'inactive';
+    status: 'draft' | 'active' | 'inactive' | 'production';
 }
 
 export interface RequestIpOwnershipVerificationResponse {
@@ -84,5 +85,21 @@ export class DevelopersConsoleService {
 
     issueExternalRedirectToken(applicationId: string): Observable<IssueExternalRedirectTokenResponse> {
         return this.http.post<IssueExternalRedirectTokenResponse>(`${this.baseUrl}/external/redirect-token`, { applicationId });
+    }
+
+    setApplicationIp(applicationId: string, ip: string): Observable<void> {
+        return this.http.post<void>(`${this.baseUrl}/applications/${applicationId}/ip`, { ipAddress: ip });
+    }
+
+    setApplicationRoute(applicationId: string, redirectRoute: string): Observable<UpdateApplicationSettingsResponse> {
+        return this.http.post<UpdateApplicationSettingsResponse>(`${this.baseUrl}/applications/${applicationId}/redirect-route`, { redirectRoute });
+    }
+
+    launchApplicationToProduction(applicationId: string): Observable<{ applicationId: string; status: string }> {
+        return this.http.post<{ applicationId: string; status: string }>(`${this.baseUrl}/applications/${applicationId}/launch-production`, {});
+    }
+
+    toggleApplicationStatus(applicationId: string): Observable<{ applicationId: string; status: string }> {
+        return this.http.post<{ applicationId: string; status: string }>(`${this.baseUrl}/applications/${applicationId}/toggle-status`, {});
     }
 }

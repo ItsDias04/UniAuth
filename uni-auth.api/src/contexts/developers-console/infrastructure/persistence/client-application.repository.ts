@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { ClientApplication } from '../../domain/entities/client-application.entity';
 import { IClientApplicationRepository } from '../../domain/repositories/client-application.repository.interface';
 import { ClientApplicationOrmEntity } from './client-application.orm-entity';
-
+import { ClientApplicationStatus } from '../../domain/entities/client-application.entity';
 @Injectable()
 export class ClientApplicationRepository implements IClientApplicationRepository {
   constructor(
@@ -14,12 +14,13 @@ export class ClientApplicationRepository implements IClientApplicationRepository
 
   async save(application: ClientApplication): Promise<void> {
     await this.repository.save({
-      id: application.id,
+        id: application.id,
       ownerUserId: application.ownerUserId,
       name: application.name,
       redirectRoute: application.redirectRoute,
       status: application.status,
-      verifiedIps: application.verifiedIps,
+      ip: application.ip || '',
+      ipIsVerified: application.ipIsVerified,
     });
   }
 
@@ -32,8 +33,9 @@ export class ClientApplicationRepository implements IClientApplicationRepository
       ownerUserId: row.ownerUserId,
       name: row.name,
       redirectRoute: row.redirectRoute,
-      status: (row.status as 'draft' | 'active' | 'inactive') || 'draft',
-      verifiedIps: row.verifiedIps || [],
+      status: (row.status as ClientApplicationStatus ) || 'draft',
+      ip: row.ip,
+      ipIsVerified: row.ipIsVerified,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });
@@ -51,8 +53,9 @@ export class ClientApplicationRepository implements IClientApplicationRepository
         ownerUserId: row.ownerUserId,
         name: row.name,
         redirectRoute: row.redirectRoute,
-        status: (row.status as 'draft' | 'active' | 'inactive') || 'draft',
-        verifiedIps: row.verifiedIps || [],
+        status: (row.status as ClientApplicationStatus ) || 'draft',
+        ip: row.ip,
+        ipIsVerified: row.ipIsVerified,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       }),

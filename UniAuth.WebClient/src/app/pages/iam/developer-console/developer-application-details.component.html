@@ -1,101 +1,197 @@
-<div class="details-page bg-surface-50 dark:bg-surface-950">
-    <div class="content-wrap">
-        <a pButton routerLink="/developer-console/applications" icon="pi pi-arrow-left" label="К списку приложений" severity="secondary"></a>
+<div class="details-page bg-surface-50 dark:bg-surface-950 min-h-screen p-4">
+    <p-toast position="top-right" />
+    <div class="max-w-6xl mx-auto">
+        <!-- Back Button -->
+        <div class="mb-4">
+            <a pButton routerLink="/developer-console/applications" icon="pi pi-arrow-left" label="К списку приложений" severity="secondary" text></a>
+        </div>
 
-        @if (errorMessage) {
-            <p-message severity="error" [text]="errorMessage" styleClass="mb-3 w-full" />
-        }
-
-        <p-card *ngIf="application" [header]="application.name" [subheader]="application.applicationId">
-            <p class="m-0 mb-2"><strong>Статус:</strong> {{ application.status }}</p>
-            <p class="m-0 mb-2"><strong>Redirect:</strong> {{ application.redirectRoute }}</p>
-            <p class="m-0 mb-4"><strong>Verified IPs:</strong> {{ application.verifiedIps.join(', ') || 'нет' }}</p>
-
-            <div class="action-grid mb-4">
-                <h4 class="m-0">Маршрут редиректа приложения</h4>
-                <input pInputText [(ngModel)]="editRedirectRoute" placeholder="https://0.0.0.0/route/callback" />
-                      </div>
-
-
-            <div class="action-grid">
-                <h4 class="m-0">Проверка владения IP</h4>
-                <button pButton type="button" label="Запросить verification token" [loading]="actionLoading" (click)="requestIpVerification()"></button>
-
-                @if (ipVerification) {
-                    <div class="result-box">
-                        <div><strong>Token:</strong> {{ ipVerification.token }}</div>
-                        <div><strong>TTL:</strong> {{ ipVerification.expiresInSeconds }} сек</div>
-                        <div><strong>Hint:</strong> {{ ipVerification.confirmationHint }}</div>
-                    </div>
-                }
+        <p-card *ngIf="application" [header]="application.name" styleClass="shadow-lg">
+            <!-- Application Info Header -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 pb-6 border-b border-surface-200 dark:border-surface-700">
+                <div>
+                    <p class="text-sm text-surface-500 dark:text-surface-400">Статус</p>
+                    <p-tag [value]="application!.status" [severity]="getStatusSeverity(application!.status)" styleClass="mt-2"></p-tag>
+                </div>
+                <div>
+                    <p class="text-sm text-surface-500 dark:text-surface-400">IP Верификация</p>
+                    <p-chip *ngIf="application!.ipIsVerified" label="✓ Верифицирован" severity="success" styleClass="mt-2" icon="pi pi-check"></p-chip>
+                    <p-chip *ngIf="!application!.ipIsVerified" label="✗ Не верифицирован" severity="warning" styleClass="mt-2" icon="pi pi-exclamation-circle"></p-chip>
+                </div>
+                <div>
+                    <p class="text-sm text-surface-500 dark:text-surface-400">Текущий IP</p>
+                    <p class="mt-2 font-mono text-lg">{{ application!.ip || 'не установлен' }}</p>
+                </div>
             </div>
 
-            <div class="action-grid mt-4">
-                <h4 class="m-0">Документация: внешний redirect token</h4>
-                <p class="m-0 text-muted-color"><strong>Flow:</strong> 1) Верификация IP по redirectRoute → 2) Генерация externalToken на пользователя → 3) Авторизация пользователя в UniAuth → 4) Получение временного code и redirect на внешний маршрут → 5) Внешняя система валидирует code и использует user payload для login/register.</p>
-                <p class="m-0 text-muted-color">Путь на фронте для авто-получения и проверки токена: <strong>/oauth2/external-redirect</strong>.</p>
-                <p class="m-0 text-muted-color">Query параметры: <strong>applicationId</strong>, <strong>redirectUri</strong>, опционально <strong>state</strong> и <strong>externalToken</strong>.</p>
-                <p class="m-0 text-muted-color">Если externalToken отсутствует или истек, компонент автоматически запросит новый, получит временный code и выполнит редирект.</p>
-                                <a pButton [routerLink]="['/oauth2/external-redirect']" [queryParams]="{ applicationId: application.applicationId, redirectUri: application.redirectRoute }" label="UA Перейти через UniAuth" icon="pi pi-shield" severity="secondary"></a>
+            <!-- Three Main Steps -->
+            <div class="step-container mb-8">
+                <!-- Step 1: IP Verification -->
+                <div class="step-panel" [class.active]="currentStep === 0">
+                    <div class="step-header">
+                        <span class="flex items-center gap-2 cursor-pointer" (click)="currentStep = 0">
+                            <span class="flex items-center justify-center w-8 h-8 rounded-full font-bold text-white" 
+                                [ngClass]="application.ipIsVerified ? 'bg-green-500' : 'bg-orange-500'">
+                                {{ application.ipIsVerified ? '✓' : '1' }}
+                            </span>
+                            <span class="text-lg font-semibold">1. Верификация IP</span>
+                        </span>
+                    </div>
 
-                                <div class="result-box">
-                                        <div><strong>Пример запроса (получить временный code и redirect)</strong></div>
-                                        <pre>POST /api/v1/oauth2/sso/authorize
-Authorization: Bearer &lt;access_token&gt;
-&#123;
-    "clientId": "&lt;applicationId&gt;",
-    "redirectUri": "&lt;redirectUri&gt;",
-    "externalToken": "&lt;externalToken&gt;",
-    "state": "opaque-state"
-&#125;</pre>
-                                        <pre>&#123;
-    "authorizationCode": "a1b2c3...",
-    "expiresInSeconds": 120,
-    "redirectUrl": "&lt;redirectUri&gt;?code=a1b2c3...&state=opaque-state"
-&#125;</pre>
+                    <div class="step-content p-4" *ngIf="currentStep === 0">
+                        <p class="text-surface-600 dark:text-surface-400 mb-4">Установите и верифицируйте IP-адрес вашего сервера для безопасного подключения.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label pLabel class="mb-2">IP-адрес</label>
+                                <input pInputText [(ngModel)]="editIp" placeholder="0.0.0.0" class="w-full" />
+                            </div>
+                            <div class="flex items-end">
+                                <button pButton type="button" label="Установить IP" icon="pi pi-check" [loading]="actionLoading" (click)="setIp()" class="w-full"></button>
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg border border-blue-200 dark:border-blue-500/30 mb-4">
+                            <p class="text-sm text-blue-800 dark:text-blue-300">
+                                <strong>💡 Совет:</strong> После установки IP нажмите кнопку ниже для генерации токена верификации.
+                            </p>
+                        </div>
+
+                        <button pButton type="button" label="Запросить Token Верификации" icon="pi pi-key" severity="info" [loading]="actionLoading" (click)="requestIpVerification()" [disabled]="!editIp || application.ipIsVerified" class="w-full mb-4"></button>
+
+                        @if (ipVerification) {
+                            <div class="bg-surface-100 dark:bg-surface-800 p-4 rounded-lg border border-surface-300 dark:border-surface-600">
+                                <p class="font-semibold mb-3">📋 Token Верификации:</p>
+                                <div class="space-y-2 font-mono text-sm">
+                                    <div class="flex items-center justify-between bg-surface-50 dark:bg-surface-700 p-2 rounded">
+                                        <span>{{ ipVerification.token }}</span>
+                                        <button pButton type="button" [icon]="'pi pi-copy'" severity="secondary" text rounded (click)="copyToClipboard(ipVerification.token)"></button>
+                                    </div>
+                                    <div><strong>TTL:</strong> {{ ipVerification.expiresInSeconds }} сек</div>
+                                    <div><strong>Инструкция:</strong> {{ ipVerification.confirmationHint }}</div>
                                 </div>
+                            </div>
+                        }
+                    </div>
+                </div>
 
-                                <div class="result-box">
-                                        <div><strong>Пример запроса (валидность временного токена/code)</strong></div>
-                                        <pre>POST /api/v1/oauth2/sso/validate-temporary-token
-&#123;
-    "authorizationCode": "a1b2c3..."
-&#125;</pre>
-                                        <pre>// valid
-&#123;
-    "valid": true,
-    "user": &#123;
-        "userId": "55be7f0f-e651-47f2-aaf8-a6f9e3f923ba",
-        "clientId": "&lt;applicationId&gt;",
-        "email": "john.doe@example.com",
-        "firstName": "John",
-        "lastName": "Doe",
-        "avatarUrl": null
-    &#125;
-&#125;
+                <!-- Step 2: Redirect Route Configuration -->
+                <div class="step-panel" [class.active]="currentStep === 1">
+                    <div class="step-header">
+                        <span class="flex items-center gap-2 cursor-pointer" (click)="currentStep = 1">
+                            <span class="flex items-center justify-center w-8 h-8 rounded-full font-bold text-white" 
+                                [ngClass]="application.redirectRoute ? 'bg-green-500' : 'bg-orange-500'">
+                                {{ application.redirectRoute ? '✓' : '2' }}
+                            </span>
+                            <span class="text-lg font-semibold">2. Настройка Redirect Route</span>
+                        </span>
+                    </div>
 
-// invalid
-&#123;
-    "valid": false,
-    "reason": "Authorization code is invalid or expired"
-&#125;</pre>
-                                </div>
+                    <div class="step-content p-4" *ngIf="currentStep === 1">
+                        <p class="text-surface-600 dark:text-surface-400 mb-4">Укажите маршрут для редиректа после успешной авторизации.</p>
+                        
+                        <div class="mb-4">
+                            <label pLabel class="mb-2">Redirect Route (путь)</label>
+                            <input pInputText [(ngModel)]="editRedirectRoute" placeholder="/callback" class="w-full" />
+                            <small class="text-surface-500 dark:text-surface-400">Например: /auth/callback или /oauth/redirect</small>
+                        </div>
+
+                        <button pButton type="button" label="Сохранить Route" icon="pi pi-save" severity="success" [loading]="actionLoading" (click)="saveRoute()" [disabled]="!editRedirectRoute" class="w-full mb-4"></button>
+
+                        @if (application.redirectRoute) {
+                            <div class="bg-green-50 dark:bg-green-500/10 p-4 rounded-lg border border-green-200 dark:border-green-500/30">
+                                <p class="text-sm text-green-800 dark:text-green-300">
+                                    <strong>✓ Текущий Route:</strong> {{ application.redirectRoute }}
+                                </p>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Step 3: Launch to Production -->
+                <div class="step-panel" [class.active]="currentStep === 2">
+                    <div class="step-header">
+                        <span class="flex items-center gap-2 cursor-pointer" (click)="currentStep = 2">
+                            <span class="flex items-center justify-center w-8 h-8 rounded-full font-bold text-white" 
+                                [ngClass]="application.status === 'production' ? 'bg-green-500' : 'bg-orange-500'">
+                                {{ application.status === 'production' ? '✓' : '3' }}
+                            </span>
+                            <span class="text-lg font-semibold">3. Запуск в Продакшн</span>
+                        </span>
+                    </div>
+
+                    <div class="step-content p-4" *ngIf="currentStep === 2">
+                        <p class="text-surface-600 dark:text-surface-400 mb-4">После верификации IP и настройки маршрута запустите приложение в продакшн.</p>
+
+                        <div class="bg-amber-50 dark:bg-amber-500/10 p-4 rounded-lg border border-amber-200 dark:border-amber-500/30 mb-4">
+                            <p class="text-sm text-amber-800 dark:text-amber-300 mb-3">
+                                <strong>⚠️ Требования для запуска:</strong>
+                            </p>
+                            <ul class="text-sm text-amber-700 dark:text-amber-400 space-y-1 list-disc list-inside">
+                                <li [class.opacity-50]="!application.ipIsVerified">✓ IP должен быть верифицирован</li>
+                                <li [class.opacity-50]="!application.redirectRoute">✓ Redirect Route должен быть установлен</li>
+                            </ul>
+                        </div>
+
+                        @if (application.ipIsVerified && application.redirectRoute) {
+                            <button pButton 
+                                type="button" 
+                                label="🚀 Запустить в Продакшн" 
+                                icon="pi pi-rocket" 
+                                severity="success" 
+                                [loading]="actionLoading" 
+                                (click)="launchToProduction()" 
+                                [disabled]="application.status === 'production'"
+                                class="w-full p-button-lg mb-4">
+                            </button>
+                        } @else {
+                            <button pButton 
+                                type="button" 
+                                label="🚀 Запустить в Продакшн (недоступно)" 
+                                icon="pi pi-lock" 
+                                disabled
+                                class="w-full p-button-lg opacity-50 mb-4">
+                            </button>
+                        }
+
+                        @if (application.status === 'production') {
+                            <div class="bg-green-50 dark:bg-green-500/10 p-4 rounded-lg border border-green-200 dark:border-green-500/30">
+                                <p class="text-sm text-green-800 dark:text-green-300">
+                                    <strong>✓ Приложение в продакшн!</strong> Вы можете начать использование OAuth2 интеграции.
+                                </p>
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
 
-            <div class="action-grid mt-4">
-                <h4 class="m-0">Внешний redirect token</h4>
-                <button pButton type="button" label="Сгенерировать redirect token" [loading]="actionLoading" (click)="issueRedirectToken()"></button>
+            <!-- Additional Actions -->
+            <div class="border-t border-surface-200 dark:border-surface-700 pt-6">
+                <h3 class="text-xl font-semibold mb-4">Дополнительные Действия</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button pButton 
+                        type="button" 
+                        [label]="application!.status === 'active' || application!.status === 'production' ? 'Отключить Приложение' : 'Включить Приложение'" 
+                        [icon]="application!.status === 'active' || application!.status === 'production' ? 'pi pi-pause' : 'pi pi-play'" 
+                        [severity]="application!.status === 'active' || application!.status === 'production' ? 'secondary' : 'info'" 
+                        [loading]="actionLoading" 
+                        (click)="toggleStatus()"
+                        class="w-full">
+                    </button>
 
-                @if (redirectToken; as token) {
-                    <div class="result-box">
-                        <div><strong>Token:</strong> {{ token.token }}</div>
-                        <div><strong>TTL:</strong> {{ token.expiresInSeconds }} сек</div>
-                        <div class="break-all"><strong>Redirect URL:</strong> {{ token.redirectUrl }}</div>
-                    </div>
-                }
+                    <a pButton 
+                        [routerLink]="['/oauth2/external-redirect']" 
+                        [queryParams]="{ applicationId: application!.applicationId, redirectUri: application!.redirectRoute }" 
+                        label="Тестировать OAuth2" 
+                        icon="pi pi-shield" 
+                        severity="info" 
+                        class="w-full">
+                    </a>
+                </div>
             </div>
         </p-card>
 
-        <p-card *ngIf="!application && !loading" header="Приложение не найдено"></p-card>
+        <p-card *ngIf="!application && !loading" header="Приложение не найдено" styleClass="shadow-lg"></p-card>
     </div>
 </div>

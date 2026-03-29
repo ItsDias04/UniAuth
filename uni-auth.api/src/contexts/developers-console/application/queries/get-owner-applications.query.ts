@@ -8,7 +8,8 @@ export class DeveloperApplicationItem implements IQueryOutput {
     public readonly name: string,
     public readonly redirectRoute: string,
     public readonly status: ClientApplicationStatus,
-    public readonly verifiedIps: string[],
+    public readonly ip: string | null,
+    public readonly ipIsVerified: boolean,
     public readonly createdAt: Date,
   ) {}
 }

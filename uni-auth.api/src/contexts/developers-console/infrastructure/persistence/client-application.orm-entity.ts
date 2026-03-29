@@ -25,8 +25,11 @@ export class ClientApplicationOrmEntity {
   @Column({ type: 'varchar', length: 24, default: 'draft' })
   status: string;
 
-  @Column({ type: 'jsonb', name: 'verified_ips', default: () => "'[]'" })
-  verifiedIps: string[];
+  @Column({ type: 'varchar', length: 45, name: 'ip', default: () => "''" })
+  ip: string;
+
+  @Column( { type: 'boolean', name: 'ip_is_verified', default: false } )
+  ipIsVerified: boolean;
 
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   createdAt: Date;

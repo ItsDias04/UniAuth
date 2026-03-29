@@ -55,7 +55,6 @@ export class UpdateClientApplicationSettingsHandler
     }
 
     application.updateSettings({
-      name: command.name?.trim() || undefined,
       redirectRoute: command.redirectRoute?.trim() || undefined,
     });
 

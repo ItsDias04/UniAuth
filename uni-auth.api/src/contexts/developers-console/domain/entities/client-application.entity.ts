@@ -1,6 +1,7 @@
+
 import { AggregateRoot } from '../../../../common/domain';
 
-export type ClientApplicationStatus = 'draft' | 'active' | 'inactive';
+export type ClientApplicationStatus = 'IpVerificationPending' | 'NeedsAddRoute' | 'active' | 'inactive' | 'production';
 
 /**
  * Developer-owned client application used for SSO integrations.
@@ -11,7 +12,8 @@ export class ClientApplication extends AggregateRoot<string> {
   private _name: string;
   private _redirectRoute: string;
   private _status: ClientApplicationStatus;
-  private _verifiedIps: Set<string>;
+  private _ip: string;
+  private _ipIsVerified: boolean = false;
 
   private constructor(props: {
     id: string;
@@ -19,14 +21,14 @@ export class ClientApplication extends AggregateRoot<string> {
     name: string;
     redirectRoute: string;
     status: ClientApplicationStatus;
-    verifiedIps?: string[];
+    ip : string;
   }) {
     super(props.id);
     this._ownerUserId = props.ownerUserId;
     this._name = props.name;
     this._redirectRoute = props.redirectRoute;
     this._status = props.status;
-    this._verifiedIps = new Set(props.verifiedIps ?? []);
+    this._ip = props.ip;
   }
 
   static create(props: {
@@ -38,8 +40,8 @@ export class ClientApplication extends AggregateRoot<string> {
     return new ClientApplication({
       ...props,
       redirectRoute: props.redirectRoute ?? '',
-      status: 'draft',
-      verifiedIps: [],
+      status: 'IpVerificationPending',
+      ip: '',
     });
   }
 
@@ -49,9 +51,10 @@ export class ClientApplication extends AggregateRoot<string> {
     name: string;
     redirectRoute: string;
     status: ClientApplicationStatus;
-    verifiedIps: string[];
     createdAt?: Date;
     updatedAt?: Date;
+    ip: string;
+    ipIsVerified: boolean;
   }): ClientApplication {
     const app = new ClientApplication(props);
     if (props.createdAt) app._createdAt = props.createdAt;
@@ -60,8 +63,11 @@ export class ClientApplication extends AggregateRoot<string> {
   }
 
   verifyIp(ip: string): void {
-    this._verifiedIps.add(ip);
+    if (this.redirectRoute === '') {
+      this._status = 'NeedsAddRoute';
+    } else {
     this._status = 'active';
+    }
     this.touch();
   }
 
@@ -75,19 +81,20 @@ export class ClientApplication extends AggregateRoot<string> {
 
     if (props.redirectRoute !== undefined) {
       this._redirectRoute = props.redirectRoute;
-      this._verifiedIps.clear();
-      this._status = 'draft';
+      this._status = 'IpVerificationPending';
     }
 
     this.touch();
   }
 
-  get isVerifiedForAnyIp(): boolean {
-    return this._verifiedIps.size > 0;
+  setIp(ip: string): void {
+    this._ip = ip;
+    this._ipIsVerified = false;
+    this.touch();
   }
 
-  hasVerifiedIp(ip: string): boolean {
-    return this._verifiedIps.has(ip);
+  setRoute(route: string): void {
+    this._redirectRoute = route;
   }
 
   get ownerUserId(): string {
@@ -102,15 +109,41 @@ export class ClientApplication extends AggregateRoot<string> {
     return this._redirectRoute;
   }
 
+  get ip(): string {
+    return this._ip;
+  }
+
+  get ipIsVerified(): boolean {
+    return this._ipIsVerified;
+  }
+
   get status(): ClientApplicationStatus {
     return this._status;
   }
 
   get isActive(): boolean {
-    return this._status === 'active';
+    return this._status === 'active' || this._status === 'production';
   }
 
-  get verifiedIps(): string[] {
-    return Array.from(this._verifiedIps);
+  launchToProduction(): void {
+    if (this._status !== 'active' && this._status !== 'production') {
+      throw new Error('Application must be active to launch to production');
+    }
+    this._status = 'production';
+    this.touch();
+  }
+
+  toggleStatus(): void {
+    if (this._status === 'production' || this._status === 'active') {
+      this._status = 'inactive';
+    } else if (this._status === 'inactive') {
+      this._status = 'active';
+    }
+    this.touch();
+  }
+
+  markIpAsVerified(): void {
+    this._ipIsVerified = true;
+    this.touch();
   }
 }

@@ -64,11 +64,11 @@ export class RequestIpOwnershipVerificationHandler
       throw new ForbiddenException('You are not allowed to verify IP for this application');
     }
 
-    if (!application.redirectRoute) {
-      throw new BadRequestException('Application redirectRoute is not configured');
+    if (!application.ip) {
+      throw new BadRequestException('Application IP is not configured');
     }
 
-    const expectedIp = await resolveRouteIp(application.redirectRoute);
+    const expectedIp = application.ip;
 
     const token = randomBytes(24).toString('hex');
 

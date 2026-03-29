@@ -45,7 +45,8 @@ export class GetApplicationByIdHandler
       application.name,
       application.redirectRoute,
       application.status,
-      application.verifiedIps,
+      application.ip,
+        application.ipIsVerified,
       application.createdAt,
       application.updatedAt,
     );

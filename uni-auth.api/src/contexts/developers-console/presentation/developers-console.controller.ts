@@ -17,14 +17,16 @@ import {
 } from '@nestjs/swagger';
 import { Request } from 'express';
 import {
+    AddIpToApplicationDto,
   ConfirmIpOwnershipDto,
   ConsumeExternalRedirectTokenDto,
   CreateClientApplicationDto,
   IssueExternalRedirectTokenDto,
   UpdateClientApplicationSettingsDto,
+  SetApplicationRouteDto,
 } from './dto/developers-console.dto';
 import { CreateClientApplicationCommand } from '../application/commands/create-client-application.command';
-import { RequestIpOwnershipVerificationCommand } from '../application/commands/request-ip-ownership-verification.command';
+import { RequestIpOwnershipVerificationCommand, RequestIpOwnershipVerificationCommandOutput } from '../application/commands/request-ip-ownership-verification.command';
 import { ConfirmIpOwnershipCommand } from '../application/commands/confirm-ip-ownership.command';
 import { IssueExternalRedirectTokenCommand } from '../application/commands/issue-external-redirect-token.command';
 import { ConsumeExternalRedirectTokenQuery } from '../application/queries/consume-external-redirect-token.query';
@@ -33,6 +35,9 @@ import { GetApplicationByIdQuery } from '../application/queries/get-application-
 import { UpdateClientApplicationSettingsCommand } from '../application/commands/update-client-application-settings.command';
 import { Public } from '../../../common/decorators/public.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { AddIpToApplicationCommand } from '../application/commands/add-ip-to-application.command';
+import { LaunchApplicationToProductionCommand } from '../application/commands/launch-application-to-production.command';
+import { ToggleApplicationStatusCommand } from '../application/commands/toggle-application-status.command';
 
 @ApiTags('Developers Console')
 @Controller('developers-console')
@@ -82,25 +87,44 @@ export class DevelopersConsoleController {
     );
   }
 
-  @Post('applications/:applicationId/settings')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Update application settings (name and redirect route)' })
-  @ApiBody({ type: UpdateClientApplicationSettingsDto })
-  @ApiOkResponse({ description: 'Application settings updated successfully' })
-  async updateApplicationSettings(
-    @CurrentUser('sub') userId: string,
-    @Param('applicationId') applicationId: string,
-    @Body() dto: UpdateClientApplicationSettingsDto,
-  ) {
-    return this.commandBus.execute(
-      new UpdateClientApplicationSettingsCommand(
-        userId,
-        applicationId,
-        dto.name,
-        dto.redirectRoute,
-      ),
-    );
-  }
+  @Post('applications/:applicationId/ip')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Add ip address to application' })
+    @ApiBody({ type: AddIpToApplicationDto })
+    @ApiOkResponse({ description: 'Application updated successfully' })
+    async addIpToApplication(
+        @CurrentUser('sub') userId: string,
+        @Param('applicationId') applicationId: string,
+        @Body() dto: AddIpToApplicationDto,
+    ) {
+        return this.commandBus.execute(
+            new AddIpToApplicationCommand(
+                userId,
+                applicationId,
+                dto.ipAddress,
+            ),
+        );
+    }
+
+@Post('applications/:applicationId/redirect-route')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Update application redirect route' })
+    @ApiBody({ type: SetApplicationRouteDto })
+    @ApiOkResponse({ description: 'Application updated successfully' })
+    async updateApplicationRoute(
+        @CurrentUser('sub') userId: string,
+        @Param('applicationId') applicationId: string,
+        @Body() dto: SetApplicationRouteDto,
+    ) {
+        return this.commandBus.execute(
+            new UpdateClientApplicationSettingsCommand(
+                userId,
+                applicationId,
+                undefined,
+                dto.redirectRoute,
+            ),
+        );
+    }
 
   @Post('applications/:applicationId/ip/request-verification')
   @HttpCode(HttpStatus.OK)
@@ -108,7 +132,8 @@ export class DevelopersConsoleController {
   @ApiOkResponse({
     description:
       'Token returned; third-party site must call confirmation endpoint from declared IP',
-  })
+   type: RequestIpOwnershipVerificationCommandOutput
+    })
   async requestIpVerification(
     @CurrentUser('sub') userId: string,
     @Param('applicationId') applicationId: string,
@@ -160,6 +185,32 @@ export class DevelopersConsoleController {
   async consumeExternalRedirectToken(@Body() dto: ConsumeExternalRedirectTokenDto) {
     return this.queryBus.execute(
       new ConsumeExternalRedirectTokenQuery(dto.token),
+    );
+  }
+
+  @Post('applications/:applicationId/launch-production')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Launch application to production (requires verified IP and redirect route)' })
+  @ApiOkResponse({ description: 'Application launched to production successfully' })
+  async launchApplicationToProduction(
+    @CurrentUser('sub') userId: string,
+    @Param('applicationId') applicationId: string,
+  ) {
+    return this.commandBus.execute(
+      new LaunchApplicationToProductionCommand(userId, applicationId),
+    );
+  }
+
+  @Post('applications/:applicationId/toggle-status')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Toggle application status between active and inactive' })
+  @ApiOkResponse({ description: 'Application status toggled successfully' })
+  async toggleApplicationStatus(
+    @CurrentUser('sub') userId: string,
+    @Param('applicationId') applicationId: string,
+  ) {
+    return this.commandBus.execute(
+      new ToggleApplicationStatusCommand(userId, applicationId),
     );
   }
 }

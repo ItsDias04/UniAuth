@@ -26,11 +26,11 @@ export class DeveloperConsoleComponent {
         this.loading = true;
         this.errorMessage = '';
         this.infoMessage = '';
-
         this.oauth2SsoService
             .authorize({
                 clientId: environment.oauthClientId,
                 redirectUri: environment.oauthRedirectUri,
+                externalToken: 'dummy-token-for-dev-console',
                 state: 'dev-console-flow'
             })
             .subscribe({

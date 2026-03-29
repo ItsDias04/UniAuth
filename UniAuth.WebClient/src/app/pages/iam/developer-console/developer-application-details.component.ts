@@ -6,6 +6,11 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { TagModule } from 'primeng/tag';
+import { ChipModule } from 'primeng/chip';
+import { StepperModule } from 'primeng/stepper';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 import {
     DeveloperApplication,
     DevelopersConsoleService,
@@ -16,7 +21,20 @@ import {
 @Component({
     selector: 'app-developer-application-details',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule, CardModule, ButtonModule, InputTextModule, MessageModule],
+    imports: [
+        CommonModule,
+        FormsModule,
+        RouterModule,
+        CardModule,
+        ButtonModule,
+        InputTextModule,
+        MessageModule,
+        TagModule,
+        ChipModule,
+        StepperModule,
+        ToastModule
+    ],
+    providers: [MessageService],
     templateUrl: './developer-application-details.component.html',
     styleUrl: './developer-application-details.component.scss'
 })
@@ -25,25 +43,109 @@ export class DeveloperApplicationDetailsComponent implements OnInit {
     loading = false;
     actionLoading = false;
     errorMessage = '';
+    successMessage = '';
+    currentStep = 0;
 
-    editName = '';
     editRedirectRoute = '';
+    editIp = '';
     ipVerification: RequestIpOwnershipVerificationResponse | null = null;
     redirectToken: IssueExternalRedirectTokenResponse | null = null;
 
     constructor(
         private readonly route: ActivatedRoute,
-        private readonly developersConsoleService: DevelopersConsoleService
+        private readonly developersConsoleService: DevelopersConsoleService,
+        private readonly messageService: MessageService
     ) {}
 
     ngOnInit(): void {
         const applicationId = this.route.snapshot.paramMap.get('applicationId');
         if (!applicationId) {
-            this.errorMessage = 'Application ID не найден в маршруте';
+            this.showError('Application ID не найден в маршруте');
             return;
         }
 
         this.loadApplication(applicationId);
+    }
+
+    getStatusSeverity(status: string): string {
+        switch (status) {
+            case 'production':
+                return 'success';
+            case 'active':
+                return 'info';
+            case 'inactive':
+                return 'danger';
+            case 'draft':
+                return 'warning';
+            case 'IpVerificationPending':
+                return 'warning';
+            case 'NeedsAddRoute':
+                return 'warning';
+            default:
+                return 'secondary';
+        }
+    }
+
+    getActiveStepIndex(): number {
+        if (this.application?.status === 'production') {
+            return 2;
+        } else if (this.application?.ipIsVerified && this.application.redirectRoute) {
+            return 1;
+        }
+        return 0;
+    }
+
+    getCurrentStep(): number {
+        return this.currentStep;
+    }
+
+    setIp(): void {
+        if (!this.application || !this.editIp) {
+            return;
+        }
+
+        this.errorMessage = '';
+        this.successMessage = '';
+        this.actionLoading = true;
+
+        this.developersConsoleService.setApplicationIp(this.application.applicationId, this.editIp).subscribe({
+            next: () => {
+                this.actionLoading = false;
+                this.showSuccess('IP успешно установлен');
+                if (this.application) {
+                    this.application.ip = this.editIp;
+                    this.application.ipIsVerified = false;
+                }
+            },
+            error: (error: { error?: { message?: string | string[] } }) => {
+                this.actionLoading = false;
+                this.showError(this.extractErrorMessage(error));
+            }
+        });
+    }
+
+    saveRoute(): void {
+        if (!this.application || !this.editRedirectRoute) {
+            return;
+        }
+
+        this.errorMessage = '';
+        this.successMessage = '';
+        this.actionLoading = true;
+
+        this.developersConsoleService.setApplicationRoute(this.application.applicationId, this.editRedirectRoute).subscribe({
+            next: (response) => {
+                this.actionLoading = false;
+                this.showSuccess('Route успешно сохранён');
+                if (this.application) {
+                    this.application.redirectRoute = response.redirectRoute;
+                }
+            },
+            error: (error: { error?: { message?: string | string[] } }) => {
+                this.actionLoading = false;
+                this.showError(this.extractErrorMessage(error));
+            }
+        });
     }
 
     requestIpVerification(): void {
@@ -56,15 +158,70 @@ export class DeveloperApplicationDetailsComponent implements OnInit {
         this.ipVerification = null;
 
         this.developersConsoleService.requestIpOwnershipVerification(this.application.applicationId).subscribe({
-                next: (response) => {
-                    this.actionLoading = false;
-                    this.ipVerification = response;
-                },
-                error: (error: { error?: { message?: string | string[] } }) => {
-                    this.actionLoading = false;
-                    this.errorMessage = this.extractErrorMessage(error);
+            next: (response) => {
+                this.actionLoading = false;
+                this.ipVerification = response;
+                this.showSuccess('Token верификации успешно создан');
+            },
+            error: (error: { error?: { message?: string | string[] } }) => {
+                this.actionLoading = false;
+                this.showError(this.extractErrorMessage(error));
+            }
+        });
+    }
+
+    launchToProduction(): void {
+        if (!this.application) {
+            return;
+        }
+
+        this.errorMessage = '';
+        this.successMessage = '';
+        this.actionLoading = true;
+
+        this.developersConsoleService.launchApplicationToProduction(this.application.applicationId).subscribe({
+            next: (response) => {
+                this.actionLoading = false;
+                this.showSuccess('🚀 Приложение запущено в продакшн!');
+                if (this.application) {
+                    this.application.status = response.status as any;
                 }
-            });
+            },
+            error: (error: { error?: { message?: string | string[] } }) => {
+                this.actionLoading = false;
+                this.showError(this.extractErrorMessage(error));
+            }
+        });
+    }
+
+    toggleStatus(): void {
+        if (!this.application) {
+            return;
+        }
+
+        this.errorMessage = '';
+        this.successMessage = '';
+        this.actionLoading = true;
+
+        this.developersConsoleService.toggleApplicationStatus(this.application.applicationId).subscribe({
+            next: (response) => {
+                this.actionLoading = false;
+                this.showSuccess(`Статус изменён на: ${response.status}`);
+                if (this.application) {
+                    this.application.status = response.status as any;
+                }
+            },
+            error: (error: { error?: { message?: string | string[] } }) => {
+                this.actionLoading = false;
+                this.showError(this.extractErrorMessage(error));
+            }
+        });
+    }
+
+    copyToClipboard(text: string): void {
+        navigator.clipboard.writeText(text).then(() => {
+            this.showSuccess('Скопировано в буфер обмена');
+        });
     }
 
     issueRedirectToken(): void {
@@ -80,45 +237,13 @@ export class DeveloperApplicationDetailsComponent implements OnInit {
             next: (response) => {
                 this.actionLoading = false;
                 this.redirectToken = response;
+                this.showSuccess('Redirect token успешно сгенерирован');
             },
             error: (error: { error?: { message?: string | string[] } }) => {
                 this.actionLoading = false;
-                this.errorMessage = this.extractErrorMessage(error);
+                this.showError(this.extractErrorMessage(error));
             }
         });
-    }
-
-    saveSettings(): void {
-        if (!this.application) {
-            return;
-        }
-
-        this.errorMessage = '';
-        this.actionLoading = true;
-
-        this.developersConsoleService
-            .updateApplicationSettings(this.application.applicationId, {
-                name: this.editName,
-                redirectRoute: this.editRedirectRoute
-            })
-            .subscribe({
-                next: (updated) => {
-                    this.actionLoading = false;
-                    if (!this.application) {
-                        return;
-                    }
-
-                    this.application = {
-                        ...this.application,
-                        name: updated.name,
-                        redirectRoute: updated.redirectRoute
-                    };
-                },
-                error: (error: { error?: { message?: string | string[] } }) => {
-                    this.actionLoading = false;
-                    this.errorMessage = this.extractErrorMessage(error);
-                }
-            });
     }
 
     private loadApplication(applicationId: string): void {
@@ -129,13 +254,31 @@ export class DeveloperApplicationDetailsComponent implements OnInit {
             next: (application) => {
                 this.loading = false;
                 this.application = application;
-                this.editName = application.name;
+                this.editIp = application.ip;
                 this.editRedirectRoute = application.redirectRoute;
             },
             error: (error: { error?: { message?: string | string[] } }) => {
                 this.loading = false;
-                this.errorMessage = this.extractErrorMessage(error);
+                this.showError(this.extractErrorMessage(error));
             }
+        });
+    }
+
+    private showSuccess(message: string): void {
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Успешно',
+            detail: message,
+            life: 3000
+        });
+    }
+
+    private showError(message: string): void {
+        this.messageService.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: message,
+            life: 4000
         });
     }
 
