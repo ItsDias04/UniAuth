@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - NODE_ENV=development
       - PORT=3000
@@ -21,6 +21,13 @@ services:
       - JWT_ACCESS_TTL=900
       - JWT_REFRESH_TTL=604800
       - CORS_ORIGIN=http://localhost:4200
+      - SMTP_EMAIL=
+      - SMTP_APP_PASSWORD=
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=465
+      - SMTP_SECURE=true
+      - SMTP_FROM_EMAIL=
+      - SMTP_FROM_NAME=UniAuth
     depends_on:
       postgres:
         condition: service_healthy
@@ -31,7 +38,7 @@ services:
   postgres:
     image: postgres:16-alpine
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -39,7 +46,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -48,7 +55,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis-data:/data
     restart: unless-stopped

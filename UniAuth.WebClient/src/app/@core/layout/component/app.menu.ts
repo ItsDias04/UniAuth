@@ -21,67 +21,53 @@ export class AppMenu {
     ngOnInit() {
         this.model = [
             {
+                label: 'Главная',
+                items: [{ label: 'Дашборд', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
+            },
+            {
                 label: 'Консоль разработчика',
                 items: [
                     {
                         label: 'Приложения',
                         icon: 'pi pi-fw pi-id-card',
                         routerLink: ['/developer-console/applications']
-                    }
-                ]
-            },
-            {
-                label: 'Главная',
-                items: [{ label: 'Дашборд', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
-            },
-            {
-                label: 'Интеграции',
-                items: [
-                    {
-                        label: 'Внешние системы',
-                        icon: 'pi pi-fw pi-link',
-                        routerLink: ['/pages/external-systems']
-                    },
-                    {
-                        label: 'Регистрация клиента',
-                        icon: 'pi pi-fw pi-plus-circle',
-                        routerLink: ['/pages/external-systems/register']
-                    },
-                ]
-            },
-            {
-                label: 'Страницы',
-                icon: 'pi pi-fw pi-briefcase',
-                routerLink: ['/pages'],
-                items: [
-                    {
-                        label: 'Аутентификация',
-                        icon: 'pi pi-fw pi-user',
-                        items: [
-                            {
-                                label: 'Вход',
-                                icon: 'pi pi-fw pi-sign-in',
-                                routerLink: ['/auth/login']
-                            },
-                            {
-                                label: 'Регистрация',
-                                icon: 'pi pi-fw pi-user-plus',
-                                routerLink: ['/auth/register']
-                            },
-                            {
-                                label: 'Доступ запрещён',
-                                icon: 'pi pi-fw pi-lock',
-                                routerLink: ['/auth/access']
-                            }
-                        ]
                     },
                     {
                         label: 'Документация',
                         icon: 'pi pi-fw pi-book',
-                        routerLink: ['/documentation']
-                    },
+                        routerLink: ['/developer-console/documentation']
+                    }
                 ]
-            },
+            }
+
+            // {
+            //     label: 'Страницы',
+            //     icon: 'pi pi-fw pi-briefcase',
+            //     routerLink: ['/pages'],
+            //     items: [
+            //         {
+            //             label: 'Аутентификация',
+            //             icon: 'pi pi-fw pi-user',
+            //             items: [
+            //                 {
+            //                     label: 'Вход',
+            //                     icon: 'pi pi-fw pi-sign-in',
+            //                     routerLink: ['/auth/login']
+            //                 },
+            //                 {
+            //                     label: 'Регистрация',
+            //                     icon: 'pi pi-fw pi-user-plus',
+            //                     routerLink: ['/auth/register']
+            //                 },
+            //                 {
+            //                     label: 'Доступ запрещён',
+            //                     icon: 'pi pi-fw pi-lock',
+            //                     routerLink: ['/auth/access']
+            //                 }
+            //             ]
+            //         }
+            //     ]
+            // }
         ];
     }
 }

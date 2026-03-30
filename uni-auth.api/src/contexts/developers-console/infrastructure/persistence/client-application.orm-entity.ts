@@ -9,6 +9,7 @@ import {
 
 @Entity('developers_console_client_applications')
 @Index('idx_dev_console_owner_user_id', ['ownerUserId'])
+@Index('idx_dev_console_api_token_hash', ['apiTokenHash'], { unique: true })
 export class ClientApplicationOrmEntity {
   @PrimaryColumn('uuid')
   id: string;
@@ -28,8 +29,16 @@ export class ClientApplicationOrmEntity {
   @Column({ type: 'varchar', length: 45, name: 'ip', default: () => "''" })
   ip: string;
 
-  @Column( { type: 'boolean', name: 'ip_is_verified', default: false } )
+  @Column({ type: 'boolean', name: 'ip_is_verified', default: false })
   ipIsVerified: boolean;
+
+  @Column({
+    type: 'varchar',
+    length: 64,
+    name: 'api_token_hash',
+    nullable: true,
+  })
+  apiTokenHash: string | null;
 
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   createdAt: Date;

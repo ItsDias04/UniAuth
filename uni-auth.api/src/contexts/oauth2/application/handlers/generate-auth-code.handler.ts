@@ -4,9 +4,7 @@ import {
   ICommandHandler as NestCommandHandler,
 } from '@nestjs/cqrs';
 import { randomBytes } from 'crypto';
-import {
-  ICommandHandler,
-} from '../../../../common/cqrs';
+import { ICommandHandler } from '../../../../common/cqrs';
 import {
   GenerateAuthCodeCommand,
   GenerateAuthCodeCommandOutput,
@@ -15,10 +13,6 @@ import {
   IOAuthRedisRepository,
   OAUTH_REDIS_REPOSITORY,
 } from '../../domain/repositories/oauth-redis.repository.interface';
-import {
-  IOAuthClientValidator,
-  OAUTH_CLIENT_VALIDATOR,
-} from '../services/oauth-client-validator.interface';
 import {
   EXTERNAL_REDIRECT_TOKEN_VERIFIER,
   IExternalRedirectTokenVerifier,
@@ -35,8 +29,6 @@ export class GenerateAuthCodeHandler
   constructor(
     @Inject(OAUTH_REDIS_REPOSITORY)
     private readonly oauthRedisRepository: IOAuthRedisRepository,
-    @Inject(OAUTH_CLIENT_VALIDATOR)
-    private readonly oauthClientValidator: IOAuthClientValidator,
     @Inject(EXTERNAL_REDIRECT_TOKEN_VERIFIER)
     private readonly externalTokenVerifier: IExternalRedirectTokenVerifier,
   ) {}
@@ -45,43 +37,41 @@ export class GenerateAuthCodeHandler
     command: GenerateAuthCodeCommand,
   ): Promise<GenerateAuthCodeCommandOutput> {
     const tokenValidation = await this.externalTokenVerifier.validateAndConsume(
-      command.externalToken,
+      command.token1,
     );
 
-    if (tokenValidation.applicationId !== command.clientId) {
+    if (!tokenValidation.redirectRoute?.trim()) {
       throw new BadRequestException(
-        'External token does not belong to provided clientId',
+        'Redirect route is not configured for application',
       );
     }
 
-    if (tokenValidation.userId !== command.userId) {
-      throw new BadRequestException(
-        'External token does not belong to current user',
-      );
-    }
-
-    if (tokenValidation.redirectRoute !== command.redirectUri) {
-      throw new BadRequestException(
-        'External token redirect route mismatch',
-      );
-    }
-
-    await this.oauthClientValidator.validate(
-      command.clientId,
-      command.redirectUri,
-    );
-
-    const authorizationCode = randomBytes(32).toString('hex');
+    const token3 = randomBytes(32).toString('hex');
 
     await this.oauthRedisRepository.saveAuthorizationCode(
       {
-        authCode: authorizationCode,
+        authCode: token3,
         userId: command.userId,
-        clientId: command.clientId,
+        clientId: tokenValidation.applicationId,
       },
       this.ttlSeconds,
     );
 
-    return new GenerateAuthCodeCommandOutput(authorizationCode, this.ttlSeconds);
+    const redirectUrl = appendQueryParam(
+      tokenValidation.redirectRoute,
+      'token3',
+      token3,
+    );
+
+    return new GenerateAuthCodeCommandOutput(
+      token3,
+      this.ttlSeconds,
+      redirectUrl,
+    );
   }
+}
+
+function appendQueryParam(route: string, key: string, value: string): string {
+  const separator = route.includes('?') ? '&' : '?';
+  return `${route}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
 }

@@ -12,10 +12,8 @@ export class UserProfileOutput implements IQueryOutput {
 }
 
 /**
- * Flow 1 (SSO): exchanges one-time AuthorizationCode for user profile.
+ * Step 6-7: exchanges one-time Token 3 for user profile.
  */
-export class ExchangeCodeForProfileQuery
-  implements IQueryInput<UserProfileOutput>
-{
+export class ExchangeCodeForProfileQuery implements IQueryInput<UserProfileOutput> {
   constructor(public readonly authorizationCode: string) {}
 }

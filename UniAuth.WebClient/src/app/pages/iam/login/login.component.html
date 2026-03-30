@@ -49,7 +49,7 @@
 
                         <div class="text-center mt-5">
                             <span class="text-muted-color">Нет аккаунта? </span>
-                            <a routerLink="/auth/register" class="text-primary font-medium cursor-pointer">Зарегистрироваться</a>
+                            <a routerLink="/auth/register" [queryParams]="registrationQueryParams" class="text-primary font-medium cursor-pointer">Зарегистрироваться</a>
                         </div>
                     </div>
                 }
@@ -72,9 +72,17 @@
                     <div class="success-block">
                         <i class="pi pi-check-circle text-primary text-5xl"></i>
                         <h3 class="m-0">Вход выполнен успешно</h3>
-                        <p class="m-0 text-muted-color">Сессия активна. Можно перейти в консоль разработчика.</p>
-                        <div class="actions justify-center">
-                            <button pButton type="button" label="Перейти в консоль разработчика" (click)="goToDeveloperConsole()"></button>
+
+                        @if (hasReturnUrl) {
+                            <p class="m-0 text-muted-color">Сессия активна. Вернитесь к странице подтверждения редиректа.</p>
+                            <div class="actions justify-center">
+                                <button pButton type="button" label="Вернуться к подтверждению" (click)="continueAfterLogin()"></button>
+                            </div>
+                        } @else {
+                            <p class="m-0 text-muted-color">Сессия активна. Теперь можно открыть ссылку внешнего сервиса повторно.</p>
+                        }
+                        <div class="text-center mt-2">
+                            <a routerLink="/developer-console/applications" class="text-muted-color font-medium cursor-pointer">Открыть Developers Console</a>
                         </div>
                     </div>
                 }

@@ -1,30 +1,26 @@
-import { Injectable } from '@nestjs/common';
-import { QueryBus } from '@nestjs/cqrs';
+import { Inject, Injectable } from '@nestjs/common';
 import {
-  ConsumeExternalRedirectTokenOutput,
-  ConsumeExternalRedirectTokenQuery,
-} from '../../../developers-console/application/queries/consume-external-redirect-token.query';
+  DEVELOPERS_CONSOLE_EXTERNAL_REDIRECT_TOKEN_GATEWAY,
+  IExternalRedirectTokenGateway,
+} from '../../../developers-console/application/services/external-redirect-token-gateway.interface';
 import {
   ExternalRedirectTokenValidationResult,
   IExternalRedirectTokenVerifier,
 } from '../../application/services/external-redirect-token-verifier.interface';
 
 @Injectable()
-export class DevelopersConsoleExternalTokenVerifierService
-  implements IExternalRedirectTokenVerifier
-{
-  constructor(private readonly queryBus: QueryBus) {}
+export class DevelopersConsoleExternalTokenVerifierService implements IExternalRedirectTokenVerifier {
+  constructor(
+    @Inject(DEVELOPERS_CONSOLE_EXTERNAL_REDIRECT_TOKEN_GATEWAY)
+    private readonly externalTokenGateway: IExternalRedirectTokenGateway,
+  ) {}
 
   async validateAndConsume(
     token: string,
   ): Promise<ExternalRedirectTokenValidationResult> {
-    const output = await this.queryBus.execute<
-      ConsumeExternalRedirectTokenQuery,
-      ConsumeExternalRedirectTokenOutput
-    >(new ConsumeExternalRedirectTokenQuery(token));
+    const output = await this.externalTokenGateway.validateAndConsume(token);
 
     return {
-      userId: output.userId,
       applicationId: output.applicationId,
       redirectRoute: output.redirectRoute,
     };

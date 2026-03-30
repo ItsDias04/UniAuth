@@ -1,17 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { interval, Subscription } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
-import {
-    InitiateRegistrationRequest,
-    RegistrationService,
-} from '@/@core/contexts/iam/registration.service';
+import { InitiateRegistrationRequest, RegistrationService } from '@/@core/contexts/iam/registration.service';
 import { AppFloatingConfigurator } from '@/@core/layout/component/app.floatingconfigurator';
 
 @Component({
@@ -21,7 +18,7 @@ import { AppFloatingConfigurator } from '@/@core/layout/component/app.floatingco
     templateUrl: './registration.component.html',
     styleUrl: './registration.component.scss'
 })
-export class RegistrationComponent implements OnDestroy {
+export class RegistrationComponent implements OnInit, OnDestroy {
     private readonly formBuilder = inject(FormBuilder);
 
     currentStep = 1;
@@ -36,12 +33,11 @@ export class RegistrationComponent implements OnDestroy {
 
     errorMessage: string | null = null;
     infoMessage: string | null = null;
+    returnUrl: string | null = null;
 
     readonly initiateForm = this.formBuilder.nonNullable.group({
         login: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(64)]],
-        password: [
-          '',  [Validators.required, Validators.minLength(8), Validators.maxLength(128), Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/)]
-        ],
+        password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(128), Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/)]],
         confirmPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(128)]],
         firstName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
         lastName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
@@ -57,7 +53,23 @@ export class RegistrationComponent implements OnDestroy {
         whatsAppCode: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]]
     });
 
-    constructor(private readonly registrationService: RegistrationService) {}
+    constructor(
+        private readonly registrationService: RegistrationService,
+        private readonly route: ActivatedRoute
+    ) {}
+
+    ngOnInit(): void {
+        const requestedReturnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        this.returnUrl = this.normalizeReturnUrl(requestedReturnUrl);
+    }
+
+    get loginQueryParams(): { returnUrl: string } | null {
+        if (!this.returnUrl) {
+            return null;
+        }
+
+        return { returnUrl: this.returnUrl };
+    }
 
     get formattedTime(): string {
         const minutes = Math.floor(this.remainingSeconds / 60)
@@ -218,5 +230,17 @@ export class RegistrationComponent implements OnDestroy {
             return message.join(' ');
         }
         return message ?? 'Произошла ошибка. Попробуйте еще раз.';
+    }
+
+    private normalizeReturnUrl(value: string | null): string | null {
+        if (!value) {
+            return null;
+        }
+
+        if (value.startsWith('/')) {
+            return value;
+        }
+
+        return null;
     }
 }

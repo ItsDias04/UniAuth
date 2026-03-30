@@ -1,12 +1,5 @@
-import {
-  BadRequestException,
-  Inject,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  IQueryHandler as NestQueryHandler,
-  QueryHandler,
-} from '@nestjs/cqrs';
+import { BadRequestException, Inject, NotFoundException } from '@nestjs/common';
+import { IQueryHandler as NestQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { IQueryHandler } from '../../../../common/cqrs';
 import {
   ExchangeCodeForProfileQuery,
@@ -34,13 +27,15 @@ export class ExchangeCodeForProfileHandler
     private readonly userProfileService: IUserProfileService,
   ) {}
 
-  async execute(query: ExchangeCodeForProfileQuery): Promise<UserProfileOutput> {
+  async execute(
+    query: ExchangeCodeForProfileQuery,
+  ): Promise<UserProfileOutput> {
     const codeState = await this.oauthRedisRepository.consumeAuthorizationCode(
       query.authorizationCode,
     );
 
     if (!codeState) {
-      throw new BadRequestException('Authorization code is invalid or expired');
+      throw new BadRequestException('Token 3 is invalid or expired');
     }
 
     const profile = await this.userProfileService.getByUserId(codeState.userId);

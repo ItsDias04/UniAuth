@@ -1,7 +1,12 @@
-
 import { AggregateRoot } from '../../../../common/domain';
 
-export type ClientApplicationStatus = 'IpVerificationPending' | 'NeedsAddRoute' | 'active' | 'inactive' | 'production';
+export type ClientApplicationStatus =
+  | 'draft'
+  | 'IpVerificationPending'
+  | 'NeedsAddRoute'
+  | 'active'
+  | 'inactive'
+  | 'production';
 
 /**
  * Developer-owned client application used for SSO integrations.
@@ -14,6 +19,7 @@ export class ClientApplication extends AggregateRoot<string> {
   private _status: ClientApplicationStatus;
   private _ip: string;
   private _ipIsVerified: boolean = false;
+  private _apiTokenHash: string | null = null;
 
   private constructor(props: {
     id: string;
@@ -21,7 +27,8 @@ export class ClientApplication extends AggregateRoot<string> {
     name: string;
     redirectRoute: string;
     status: ClientApplicationStatus;
-    ip : string;
+    ip: string;
+    apiTokenHash?: string | null;
   }) {
     super(props.id);
     this._ownerUserId = props.ownerUserId;
@@ -29,6 +36,7 @@ export class ClientApplication extends AggregateRoot<string> {
     this._redirectRoute = props.redirectRoute;
     this._status = props.status;
     this._ip = props.ip;
+    this._apiTokenHash = props.apiTokenHash ?? null;
   }
 
   static create(props: {
@@ -36,12 +44,14 @@ export class ClientApplication extends AggregateRoot<string> {
     ownerUserId: string;
     name: string;
     redirectRoute?: string;
+    apiTokenHash?: string | null;
   }): ClientApplication {
     return new ClientApplication({
       ...props,
       redirectRoute: props.redirectRoute ?? '',
       status: 'IpVerificationPending',
       ip: '',
+      apiTokenHash: props.apiTokenHash ?? null,
     });
   }
 
@@ -55,8 +65,11 @@ export class ClientApplication extends AggregateRoot<string> {
     updatedAt?: Date;
     ip: string;
     ipIsVerified: boolean;
+    apiTokenHash?: string | null;
   }): ClientApplication {
     const app = new ClientApplication(props);
+    app._ipIsVerified = props.ipIsVerified;
+    app._apiTokenHash = props.apiTokenHash ?? null;
     if (props.createdAt) app._createdAt = props.createdAt;
     if (props.updatedAt) app._updatedAt = props.updatedAt;
     return app;
@@ -66,22 +79,23 @@ export class ClientApplication extends AggregateRoot<string> {
     if (this.redirectRoute === '') {
       this._status = 'NeedsAddRoute';
     } else {
-    this._status = 'active';
+      this._status = 'active';
     }
+    this._ipIsVerified = true;
     this.touch();
   }
 
-  updateSettings(props: {
-    name?: string;
-    redirectRoute?: string;
-  }): void {
-    if (props.name !== undefined) {
-      this._name = props.name;
-    }
-
+  updateSettings(props: { name?: string; redirectRoute?: string }): void {
     if (props.redirectRoute !== undefined) {
       this._redirectRoute = props.redirectRoute;
-      this._status = 'IpVerificationPending';
+      // this._status = 'IpVerificationPending';
+    }
+    if (this.ipIsVerified) {
+      if (this.redirectRoute === '') {
+        this._status = 'NeedsAddRoute';
+      } else {
+        this._status = 'active';
+      }
     }
 
     this.touch();
@@ -95,6 +109,17 @@ export class ClientApplication extends AggregateRoot<string> {
 
   setRoute(route: string): void {
     this._redirectRoute = route;
+    this.touch();
+  }
+
+  setApiTokenHash(apiTokenHash: string): void {
+    this._apiTokenHash = apiTokenHash;
+    this.touch();
+  }
+
+  clearApiToken(): void {
+    this._apiTokenHash = null;
+    this.touch();
   }
 
   get ownerUserId(): string {
@@ -115,6 +140,14 @@ export class ClientApplication extends AggregateRoot<string> {
 
   get ipIsVerified(): boolean {
     return this._ipIsVerified;
+  }
+
+  get apiTokenHash(): string | null {
+    return this._apiTokenHash;
+  }
+
+  get hasApiToken(): boolean {
+    return !!this._apiTokenHash;
   }
 
   get status(): ClientApplicationStatus {

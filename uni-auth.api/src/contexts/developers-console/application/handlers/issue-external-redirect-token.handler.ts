@@ -48,7 +48,9 @@ export class IssueExternalRedirectTokenHandler
     command: IssueExternalRedirectTokenCommand,
   ): Promise<IssueExternalRedirectTokenCommandOutput> {
     if (!command.actorUserId?.trim() || !command.applicationId?.trim()) {
-      throw new BadRequestException('actorUserId and applicationId are required');
+      throw new BadRequestException(
+        'actorUserId and applicationId are required',
+      );
     }
 
     const application = await this.clientApplicationRepository.findById(
@@ -60,11 +62,15 @@ export class IssueExternalRedirectTokenHandler
     }
 
     if (application.ownerUserId !== command.actorUserId) {
-      throw new ForbiddenException('You are not allowed to issue token for this application');
+      throw new ForbiddenException(
+        'You are not allowed to issue token for this application',
+      );
     }
 
     if (!application.isActive) {
-      throw new BadRequestException('Application is inactive. Activate it first.');
+      throw new BadRequestException(
+        'Application is inactive. Activate it first.',
+      );
     }
 
     const token = randomBytes(24).toString('hex');
@@ -72,25 +78,12 @@ export class IssueExternalRedirectTokenHandler
     await this.redisRepository.saveExternalRedirectToken(
       {
         token,
-        userId: command.actorUserId,
         applicationId: application.id,
         redirectRoute: application.redirectRoute,
       },
       this.ttlSeconds,
     );
 
-    const redirectUrl = appendQueryToken(application.redirectRoute, token);
-
-    return new IssueExternalRedirectTokenCommandOutput(
-      token,
-      this.ttlSeconds,
-      redirectUrl,
-    );
+    return new IssueExternalRedirectTokenCommandOutput(token, this.ttlSeconds);
   }
-}
-
-function appendQueryToken(route: string, token: string): string {
-  const hasQuery = route.includes('?');
-  const separator = hasQuery ? '&' : '?';
-  return `${route}${separator}externalToken=${encodeURIComponent(token)}`;
 }

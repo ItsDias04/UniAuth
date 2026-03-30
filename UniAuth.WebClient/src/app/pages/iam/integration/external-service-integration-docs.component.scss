@@ -1,0 +1,60 @@
+.docs-page {
+    min-height: 100vh;
+    padding: 1.5rem;
+}
+
+.docs-container {
+    max-width: 72rem;
+    margin: 0 auto;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.section-block {
+    margin-bottom: 1.5rem;
+}
+
+.section-block h3 {
+    margin: 0 0 0.75rem;
+}
+
+.section-block h4 {
+    margin: 1rem 0 0.5rem;
+}
+
+.section-block pre {
+    margin: 0;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: var(--surface-100);
+    overflow: auto;
+}
+
+.section-block code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.section-block ul,
+.section-block ol {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.section-block li {
+    margin-bottom: 0.35rem;
+}
+
+@media (max-width: 640px) {
+    .docs-page {
+        padding: 1rem;
+    }
+
+    :host ::ng-deep .actions .p-button {
+        width: 100%;
+    }
+}

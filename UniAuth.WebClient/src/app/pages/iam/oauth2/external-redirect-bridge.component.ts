@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
 import { AuthSessionService } from '@/@core/contexts/security/auth-session.service';
-import { DevelopersConsoleService } from '@/@core/contexts/developers-console/developers-console.service';
 import { Oauth2SsoService } from '@/@core/contexts/oauth2/oauth2-sso.service';
+import { SecurityAuthService } from '@/@core/contexts/security/security-auth.service';
 
 @Component({
     selector: 'app-external-redirect-bridge',
@@ -17,106 +18,115 @@ import { Oauth2SsoService } from '@/@core/contexts/oauth2/oauth2-sso.service';
 })
 export class ExternalRedirectBridgeComponent implements OnInit {
     loading = false;
+    checkingCurrent = false;
     errorMessage = '';
     infoMessage = '';
+    isAuthenticated = false;
+
+    token1 = '';
+    token3 = '';
+    redirectUrl = '';
+    expiresInSeconds = 0;
 
     constructor(
         private readonly route: ActivatedRoute,
         private readonly router: Router,
         private readonly authSessionService: AuthSessionService,
-        private readonly developersConsoleService: DevelopersConsoleService,
-        private readonly oauth2SsoService: Oauth2SsoService
+        private readonly oauth2SsoService: Oauth2SsoService,
+        private readonly securityAuthService: SecurityAuthService
     ) {}
 
     ngOnInit(): void {
-        void this.handleFlow();
-    }
+        this.token1 = (this.route.snapshot.paramMap.get('token1') ?? this.route.snapshot.queryParamMap.get('token1') ?? this.route.snapshot.queryParamMap.get('externalToken') ?? '').trim();
 
-    async handleFlow(): Promise<void> {
-        this.errorMessage = '';
-        this.infoMessage = '';
-
-        const applicationId = this.route.snapshot.queryParamMap.get('applicationId') ?? '';
-        const redirectUri = this.route.snapshot.queryParamMap.get('redirectUri') ?? '';
-        const state = this.route.snapshot.queryParamMap.get('state') ?? undefined;
-        let externalToken = this.route.snapshot.queryParamMap.get('externalToken') ?? '';
-
-        if (!applicationId || !redirectUri) {
-            this.errorMessage = 'Требуются query параметры applicationId и redirectUri';
+        if (!this.token1) {
+            this.errorMessage = 'Token 1 отсутствует в URL. Используйте ссылку формата /oauth2/external-redirect/{token1}.';
             return;
         }
 
-        if (!this.authSessionService.isAuthenticated()) {
-            await this.router.navigate(['/auth/login'], {
-                queryParams: { returnUrl: this.router.url }
-            });
+        this.checkCurrentSession();
+    }
+
+    confirmRedirect(): void {
+        this.errorMessage = '';
+        this.infoMessage = '';
+
+        if (!this.token1) {
+            this.errorMessage = 'Token 1 отсутствует в URL.';
+            return;
+        }
+
+        if (!this.isAuthenticated) {
+            this.infoMessage = 'Сессия не активна. Перенаправляем на страницу входа...';
+            this.redirectToLogin();
             return;
         }
 
         this.loading = true;
-        this.infoMessage = 'Подготовка внешнего redirect token...';
+        this.oauth2SsoService.verifyToken1(this.token1).subscribe({
+            next: (response) => {
+                this.loading = false;
+                this.token3 = response.token3;
 
-        try {
-            if (!externalToken) {
-                externalToken = await this.requestExternalToken(applicationId);
-            }
+                this.redirectUrl = response.redirectUrl;
+                this.expiresInSeconds = response.expiresInSeconds;
+                this.infoMessage = 'Успешно. Выполняем редирект во внешний сервис...';
+                window.location.href = response.redirectUrl;
+            },
+            error: (error: HttpErrorResponse) => {
+                this.loading = false;
 
-            const redirectUrl = await this.authorize(applicationId, redirectUri, externalToken, state);
-            window.location.href = redirectUrl;
-            return;
-        } catch (error) {
-            if (this.isExternalTokenInvalid(error)) {
-                try {
-                    this.infoMessage = 'Токен истек/невалиден. Запрашиваю новый...';
-                    externalToken = await this.requestExternalToken(applicationId);
-                    const redirectUrl = await this.authorize(applicationId, redirectUri, externalToken, state);
-                    window.location.href = redirectUrl;
+                if (error.status === 401) {
+                    this.authSessionService.clear();
+                    this.isAuthenticated = false;
+                    this.infoMessage = 'Сессия истекла. Перенаправляем на страницу входа...';
+                    this.redirectToLogin();
                     return;
-                } catch (retryError) {
-                    this.errorMessage = this.extractErrorMessage(retryError);
                 }
-            } else {
+
                 this.errorMessage = this.extractErrorMessage(error);
             }
-        } finally {
-            this.loading = false;
-        }
-    }
-
-    private requestExternalToken(applicationId: string): Promise<string> {
-        return new Promise((resolve, reject) => {
-            this.developersConsoleService.issueExternalRedirectToken(applicationId).subscribe({
-                next: (response) => resolve(response.token),
-                error: (error: unknown) => reject(error)
-            });
         });
     }
 
-    private authorize(applicationId: string, redirectUri: string, externalToken: string, state?: string): Promise<string> {
-        return new Promise((resolve, reject) => {
-            this.oauth2SsoService
-                .authorize({
-                    clientId: applicationId,
-                    redirectUri,
-                    externalToken,
-                    state
-                })
-                .subscribe({
-                    next: (response) => {
-                        if (!response.redirectUrl) {
-                            reject(new Error('Redirect URL не получен'));
-                            return;
-                        }
-                        resolve(response.redirectUrl);
-                    },
-                    error: (error: unknown) => reject(error)
-                });
+    logoutAndLogin(): void {
+        this.authSessionService.clear();
+        this.isAuthenticated = false;
+        this.redirectToLogin();
+    }
+
+    private checkCurrentSession(): void {
+        this.errorMessage = '';
+        this.infoMessage = 'Проверяем текущую сессию...';
+        this.checkingCurrent = true;
+
+        this.securityAuthService.current().subscribe({
+            next: () => {
+                this.checkingCurrent = false;
+                this.isAuthenticated = true;
+                this.infoMessage = 'Сессия активна. Подтвердите редирект во внешний сервис.';
+            },
+            error: (error: HttpErrorResponse) => {
+                this.checkingCurrent = false;
+                this.authSessionService.clear();
+                this.isAuthenticated = false;
+
+                if (error.status === 401) {
+                    this.infoMessage = 'Сессия не активна. Перенаправляем на страницу входа...';
+                    this.redirectToLogin();
+                    return;
+                }
+
+                this.errorMessage = this.extractErrorMessage(error);
+                this.infoMessage = '';
+            }
         });
     }
 
-    private isExternalTokenInvalid(error: unknown): boolean {
-        const text = this.extractErrorMessage(error).toLowerCase();
-        return text.includes('invalid') || text.includes('expired') || text.includes('external token');
+    private redirectToLogin(): void {
+        void this.router.navigate(['/auth/login'], {
+            queryParams: { returnUrl: this.router.url }
+        });
     }
 
     private extractErrorMessage(error: unknown): string {

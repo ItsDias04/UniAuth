@@ -30,8 +30,7 @@
                 <div class="step-panel" [class.active]="currentStep === 0">
                     <div class="step-header">
                         <span class="flex items-center gap-2 cursor-pointer" (click)="currentStep = 0">
-                            <span class="flex items-center justify-center w-8 h-8 rounded-full font-bold text-white" 
-                                [ngClass]="application.ipIsVerified ? 'bg-green-500' : 'bg-orange-500'">
+                            <span class="flex items-center justify-center w-8 h-8 rounded-full font-bold text-white" [ngClass]="application.ipIsVerified ? 'bg-green-500' : 'bg-orange-500'">
                                 {{ application.ipIsVerified ? '✓' : '1' }}
                             </span>
                             <span class="text-lg font-semibold">1. Верификация IP</span>
@@ -40,7 +39,7 @@
 
                     <div class="step-content p-4" *ngIf="currentStep === 0">
                         <p class="text-surface-600 dark:text-surface-400 mb-4">Установите и верифицируйте IP-адрес вашего сервера для безопасного подключения.</p>
-                        
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label pLabel class="mb-2">IP-адрес</label>
@@ -52,12 +51,20 @@
                         </div>
 
                         <div class="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg border border-blue-200 dark:border-blue-500/30 mb-4">
-                            <p class="text-sm text-blue-800 dark:text-blue-300">
-                                <strong>💡 Совет:</strong> После установки IP нажмите кнопку ниже для генерации токена верификации.
-                            </p>
+                            <p class="text-sm text-blue-800 dark:text-blue-300"><strong>💡 Совет:</strong> После установки IP нажмите кнопку ниже для генерации токена верификации.</p>
                         </div>
 
-                        <button pButton type="button" label="Запросить Token Верификации" icon="pi pi-key" severity="info" [loading]="actionLoading" (click)="requestIpVerification()" [disabled]="!editIp || application.ipIsVerified" class="w-full mb-4"></button>
+                        <button
+                            pButton
+                            type="button"
+                            label="Запросить Token Верификации"
+                            icon="pi pi-key"
+                            severity="info"
+                            [loading]="actionLoading"
+                            (click)="requestIpVerification()"
+                            [disabled]="!editIp || application.ipIsVerified"
+                            class="w-full mb-4"
+                        ></button>
 
                         @if (ipVerification) {
                             <div class="bg-surface-100 dark:bg-surface-800 p-4 rounded-lg border border-surface-300 dark:border-surface-600">
@@ -79,8 +86,7 @@
                 <div class="step-panel" [class.active]="currentStep === 1">
                     <div class="step-header">
                         <span class="flex items-center gap-2 cursor-pointer" (click)="currentStep = 1">
-                            <span class="flex items-center justify-center w-8 h-8 rounded-full font-bold text-white" 
-                                [ngClass]="application.redirectRoute ? 'bg-green-500' : 'bg-orange-500'">
+                            <span class="flex items-center justify-center w-8 h-8 rounded-full font-bold text-white" [ngClass]="application.redirectRoute ? 'bg-green-500' : 'bg-orange-500'">
                                 {{ application.redirectRoute ? '✓' : '2' }}
                             </span>
                             <span class="text-lg font-semibold">2. Настройка Redirect Route</span>
@@ -89,7 +95,7 @@
 
                     <div class="step-content p-4" *ngIf="currentStep === 1">
                         <p class="text-surface-600 dark:text-surface-400 mb-4">Укажите маршрут для редиректа после успешной авторизации.</p>
-                        
+
                         <div class="mb-4">
                             <label pLabel class="mb-2">Redirect Route (путь)</label>
                             <input pInputText [(ngModel)]="editRedirectRoute" placeholder="/callback" class="w-full" />
@@ -100,9 +106,7 @@
 
                         @if (application.redirectRoute) {
                             <div class="bg-green-50 dark:bg-green-500/10 p-4 rounded-lg border border-green-200 dark:border-green-500/30">
-                                <p class="text-sm text-green-800 dark:text-green-300">
-                                    <strong>✓ Текущий Route:</strong> {{ application.redirectRoute }}
-                                </p>
+                                <p class="text-sm text-green-800 dark:text-green-300"><strong>✓ Текущий Route:</strong> {{ application.redirectRoute }}</p>
                             </div>
                         }
                     </div>
@@ -112,8 +116,7 @@
                 <div class="step-panel" [class.active]="currentStep === 2">
                     <div class="step-header">
                         <span class="flex items-center gap-2 cursor-pointer" (click)="currentStep = 2">
-                            <span class="flex items-center justify-center w-8 h-8 rounded-full font-bold text-white" 
-                                [ngClass]="application.status === 'production' ? 'bg-green-500' : 'bg-orange-500'">
+                            <span class="flex items-center justify-center w-8 h-8 rounded-full font-bold text-white" [ngClass]="application.status === 'production' ? 'bg-green-500' : 'bg-orange-500'">
                                 {{ application.status === 'production' ? '✓' : '3' }}
                             </span>
                             <span class="text-lg font-semibold">3. Запуск в Продакшн</span>
@@ -134,31 +137,24 @@
                         </div>
 
                         @if (application.ipIsVerified && application.redirectRoute) {
-                            <button pButton 
-                                type="button" 
-                                label="🚀 Запустить в Продакшн" 
-                                icon="pi pi-rocket" 
-                                severity="success" 
-                                [loading]="actionLoading" 
-                                (click)="launchToProduction()" 
+                            <button
+                                pButton
+                                type="button"
+                                label="🚀 Запустить в Продакшн"
+                                icon="pi pi-rocket"
+                                severity="success"
+                                [loading]="actionLoading"
+                                (click)="launchToProduction()"
                                 [disabled]="application.status === 'production'"
-                                class="w-full p-button-lg mb-4">
-                            </button>
+                                class="w-full p-button-lg mb-4"
+                            ></button>
                         } @else {
-                            <button pButton 
-                                type="button" 
-                                label="🚀 Запустить в Продакшн (недоступно)" 
-                                icon="pi pi-lock" 
-                                disabled
-                                class="w-full p-button-lg opacity-50 mb-4">
-                            </button>
+                            <button pButton type="button" label="🚀 Запустить в Продакшн (недоступно)" icon="pi pi-lock" disabled class="w-full p-button-lg opacity-50 mb-4"></button>
                         }
 
                         @if (application.status === 'production') {
                             <div class="bg-green-50 dark:bg-green-500/10 p-4 rounded-lg border border-green-200 dark:border-green-500/30">
-                                <p class="text-sm text-green-800 dark:text-green-300">
-                                    <strong>✓ Приложение в продакшн!</strong> Вы можете начать использование OAuth2 интеграции.
-                                </p>
+                                <p class="text-sm text-green-800 dark:text-green-300"><strong>✓ Приложение в продакшн!</strong> Вы можете начать использование OAuth2 интеграции.</p>
                             </div>
                         }
                     </div>
@@ -168,26 +164,50 @@
             <!-- Additional Actions -->
             <div class="border-t border-surface-200 dark:border-surface-700 pt-6">
                 <h3 class="text-xl font-semibold mb-4">Дополнительные Действия</h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button pButton 
-                        type="button" 
-                        [label]="application!.status === 'active' || application!.status === 'production' ? 'Отключить Приложение' : 'Включить Приложение'" 
-                        [icon]="application!.status === 'active' || application!.status === 'production' ? 'pi pi-pause' : 'pi pi-play'" 
-                        [severity]="application!.status === 'active' || application!.status === 'production' ? 'secondary' : 'info'" 
-                        [loading]="actionLoading" 
-                        (click)="toggleStatus()"
-                        class="w-full">
-                    </button>
 
-                    <a pButton 
-                        [routerLink]="['/oauth2/external-redirect']" 
-                        [queryParams]="{ applicationId: application!.applicationId, redirectUri: application!.redirectRoute }" 
-                        label="Тестировать OAuth2" 
-                        icon="pi pi-shield" 
-                        severity="info" 
-                        class="w-full">
-                    </a>
+                <div class="mb-4 p-4 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-100 dark:bg-surface-800">
+                    <div class="flex flex-col gap-3">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <p class="m-0 font-semibold">API Token приложения (Bearer)</p>
+                                <small class="text-surface-500 dark:text-surface-400">Генерация доступна только в статусе production. Токен отображается один раз после генерации.</small>
+                            </div>
+                            <button pButton type="button" label="Сгенерировать API Token" icon="pi pi-key" severity="warn" [loading]="actionLoading" (click)="generateApiToken()" [disabled]="application!.status !== 'production'"></button>
+                        </div>
+
+                        @if (application!.status !== 'production') {
+                            <p class="m-0 text-amber-700 dark:text-amber-300 text-sm">Для генерации API token сначала запустите приложение в production.</p>
+                        }
+
+                        @if (application!.hasApiToken && !generatedApiToken) {
+                            <p class="m-0 text-blue-700 dark:text-blue-300 text-sm">API token уже создан ранее. Для получения нового нажмите "Сгенерировать API Token".</p>
+                        }
+
+                        @if (generatedApiToken) {
+                            <div class="bg-surface-50 dark:bg-surface-700 p-3 rounded border border-surface-300 dark:border-surface-600">
+                                <p class="m-0 mb-2 text-sm">Сохраните token во внешнем сервисе:</p>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-mono text-sm break-all">{{ generatedApiToken }}</span>
+                                    <button pButton type="button" icon="pi pi-copy" severity="secondary" text rounded (click)="copyToClipboard(generatedApiToken!)"></button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button
+                        pButton
+                        type="button"
+                        [label]="application!.status === 'active' || application!.status === 'production' ? 'Отключить Приложение' : 'Включить Приложение'"
+                        [icon]="application!.status === 'active' || application!.status === 'production' ? 'pi pi-pause' : 'pi pi-play'"
+                        [severity]="application!.status === 'active' || application!.status === 'production' ? 'secondary' : 'info'"
+                        [loading]="actionLoading"
+                        (click)="toggleStatus()"
+                        class="w-full"
+                    ></button>
+
+                    <button pButton type="button" (click)="startOauth2Test()" label="Тестировать OAuth2" icon="pi pi-shield" severity="info" [loading]="actionLoading" class="w-full"></button>
                 </div>
             </div>
         </p-card>

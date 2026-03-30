@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
@@ -11,29 +11,12 @@ import { ChipModule } from 'primeng/chip';
 import { StepperModule } from 'primeng/stepper';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import {
-    DeveloperApplication,
-    DevelopersConsoleService,
-    IssueExternalRedirectTokenResponse,
-    RequestIpOwnershipVerificationResponse
-} from '@/@core/contexts/developers-console/developers-console.service';
+import { DeveloperApplication, DevelopersConsoleService, GenerateApplicationApiTokenResponse, IssueExternalRedirectTokenResponse, RequestIpOwnershipVerificationResponse } from '@/@core/contexts/developers-console/developers-console.service';
 
 @Component({
     selector: 'app-developer-application-details',
     standalone: true,
-    imports: [
-        CommonModule,
-        FormsModule,
-        RouterModule,
-        CardModule,
-        ButtonModule,
-        InputTextModule,
-        MessageModule,
-        TagModule,
-        ChipModule,
-        StepperModule,
-        ToastModule
-    ],
+    imports: [CommonModule, FormsModule, RouterModule, CardModule, ButtonModule, InputTextModule, MessageModule, TagModule, ChipModule, StepperModule, ToastModule],
     providers: [MessageService],
     templateUrl: './developer-application-details.component.html',
     styleUrl: './developer-application-details.component.scss'
@@ -50,9 +33,11 @@ export class DeveloperApplicationDetailsComponent implements OnInit {
     editIp = '';
     ipVerification: RequestIpOwnershipVerificationResponse | null = null;
     redirectToken: IssueExternalRedirectTokenResponse | null = null;
+    generatedApiToken: string | null = null;
 
     constructor(
         private readonly route: ActivatedRoute,
+        private readonly router: Router,
         private readonly developersConsoleService: DevelopersConsoleService,
         private readonly messageService: MessageService
     ) {}
@@ -238,6 +223,50 @@ export class DeveloperApplicationDetailsComponent implements OnInit {
                 this.actionLoading = false;
                 this.redirectToken = response;
                 this.showSuccess('Redirect token успешно сгенерирован');
+            },
+            error: (error: { error?: { message?: string | string[] } }) => {
+                this.actionLoading = false;
+                this.showError(this.extractErrorMessage(error));
+            }
+        });
+    }
+
+    startOauth2Test(): void {
+        if (!this.application) {
+            return;
+        }
+
+        this.errorMessage = '';
+        this.actionLoading = true;
+
+        this.developersConsoleService.issueExternalRedirectToken(this.application.applicationId).subscribe({
+            next: (response) => {
+                this.actionLoading = false;
+                void this.router.navigate(['/oauth2/external-redirect', response.token1]);
+            },
+            error: (error: { error?: { message?: string | string[] } }) => {
+                this.actionLoading = false;
+                this.showError(this.extractErrorMessage(error));
+            }
+        });
+    }
+
+    generateApiToken(): void {
+        if (!this.application) {
+            return;
+        }
+
+        this.errorMessage = '';
+        this.actionLoading = true;
+
+        this.developersConsoleService.generateApplicationApiToken(this.application.applicationId).subscribe({
+            next: (response: GenerateApplicationApiTokenResponse) => {
+                this.actionLoading = false;
+                this.generatedApiToken = response.apiToken;
+                this.showSuccess('API token сгенерирован. Сохраните его во внешнем сервисе.');
+                if (this.application) {
+                    this.application.hasApiToken = true;
+                }
             },
             error: (error: { error?: { message?: string | string[] } }) => {
                 this.actionLoading = false;

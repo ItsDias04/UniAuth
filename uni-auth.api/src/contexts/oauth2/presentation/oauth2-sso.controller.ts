@@ -2,25 +2,28 @@ import {
   Body,
   BadRequestException,
   Controller,
+  ForbiddenException,
   HttpCode,
   HttpStatus,
+  Inject,
   Post,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import {
-  ApiBody,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { createHash } from 'crypto';
+import { Request } from 'express';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Public } from '../../../common/decorators/public.decorator';
 import { GenerateAuthCodeCommand } from '../application/commands/generate-auth-code.command';
 import { ExchangeCodeForProfileQuery } from '../application/queries/exchange-code-for-profile.query';
+import { IntrospectToken3Dto, VerifyToken1Dto } from './dto/oauth2-sso.dto';
+import { IssueExternalRedirectTokenCommand } from '../../developers-console/application/commands/issue-external-redirect-token.command';
 import {
-  ExchangeCodeForProfileDto,
-  GenerateSsoAuthCodeDto,
-} from './dto/oauth2-sso.dto';
+  CLIENT_APPLICATION_REPOSITORY,
+  IClientApplicationRepository,
+} from '../../developers-console/domain/repositories/client-application.repository.interface';
 
 @ApiTags('OAuth2 SSO')
 @Controller('oauth2/sso')
@@ -28,71 +31,82 @@ export class Oauth2SsoController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    @Inject(CLIENT_APPLICATION_REPOSITORY)
+    private readonly clientApplicationRepository: IClientApplicationRepository,
   ) {}
 
-  @Post('authorize')
+  @Post('verify-token-1')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Generate short-lived authorization code for external SSO client' })
-  @ApiBody({ type: GenerateSsoAuthCodeDto })
-  @ApiOkResponse({
-    description: 'Authorization code issued for already authenticated user session',
+  @ApiOperation({
+    summary:
+      'Verify Token 1 with authenticated user (Token 2) and issue Token 3',
   })
-  async authorize(
+  @ApiBody({ type: VerifyToken1Dto })
+  @ApiOkResponse({
+    description:
+      'Token 3 and redirectUrl returned for external callback redirect',
+  })
+  async verifyToken1(
     @CurrentUser('sub') userId: string,
-    @Body() dto: GenerateSsoAuthCodeDto,
+    @Body() dto: VerifyToken1Dto,
   ) {
     const output = await this.commandBus.execute(
-      new GenerateAuthCodeCommand(
-        userId,
-        dto.clientId,
-        dto.redirectUri,
-        dto.externalToken,
-      ),
+      new GenerateAuthCodeCommand(userId, dto.token1),
     );
 
-    let redirectUrl: string | null = null;
-    if (dto.redirectUri) {
-      const url = new URL(dto.redirectUri);
-      url.searchParams.set('code', output.authorizationCode);
-      if (dto.state) {
-        url.searchParams.set('state', dto.state);
-      }
-      redirectUrl = url.toString();
-    }
-
     return {
-      authorizationCode: output.authorizationCode,
+      token3: output.token3,
       expiresInSeconds: output.expiresInSeconds,
-      redirectUrl,
+      redirectUrl: output.redirectUrl,
     };
   }
 
   @Public()
-  @Post('exchange-profile')
+  @Post('issue-token-1')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Exchange authorization code for user profile' })
-  @ApiBody({ type: ExchangeCodeForProfileDto })
-  @ApiOkResponse({
-    description: 'User profile resolved via IAM anti-corruption service',
+  @ApiOperation({
+    summary:
+      'Issue one-time Token 1 for external system using application API token',
   })
-  async exchangeProfile(@Body() dto: ExchangeCodeForProfileDto) {
-    return this.queryBus.execute(
-      new ExchangeCodeForProfileQuery(dto.authorizationCode),
+  @ApiOkResponse({
+    description: 'Token 1 issued for external redirect flow',
+  })
+  async issueToken1(@Req() request: Request) {
+    const application = await this.authenticateApplicationByApiToken(
+      request.headers.authorization,
     );
+
+    if (application.status !== 'production') {
+      throw new ForbiddenException(
+        'Application must be in production mode to issue Token 1',
+      );
+    }
+
+    const output = await this.commandBus.execute(
+      new IssueExternalRedirectTokenCommand(
+        application.ownerUserId,
+        application.id,
+      ),
+    );
+
+    return {
+      token1: output.token,
+      expiresInSeconds: output.expiresInSeconds,
+    };
   }
 
   @Public()
-  @Post('validate-temporary-token')
+  @Post('introspect-token-3')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Validate temporary authorization code and return user payload' })
-  @ApiBody({ type: ExchangeCodeForProfileDto })
+  @ApiOperation({ summary: 'Validate and consume one-time Token 3' })
+  @ApiBody({ type: IntrospectToken3Dto })
   @ApiOkResponse({
-    description: 'Validation result for external application sign-in/up flow',
+    description: 'Validation result for external service token exchange',
     schema: {
       examples: {
-        valid: {
+        ok: {
           value: {
-            valid: true,
+            status: 'OK',
             user: {
               userId: '55be7f0f-e651-47f2-aaf8-a6f9e3f923ba',
               clientId: 'developer-console-web',
@@ -103,36 +117,85 @@ export class Oauth2SsoController {
             },
           },
         },
-        invalid: {
+        error: {
           value: {
-            valid: false,
-            reason: 'Authorization code is invalid or expired',
+            status: 'ERROR',
+            reason: 'Token 3 is invalid or expired',
           },
         },
       },
     },
   })
-  async validateTemporaryToken(@Body() dto: ExchangeCodeForProfileDto) {
+  async introspectToken3(
+    @Req() request: Request,
+    @Body() dto: IntrospectToken3Dto,
+  ) {
+    const application = await this.authenticateApplicationByApiToken(
+      request.headers.authorization,
+    );
+
+    if (application.status !== 'production') {
+      throw new ForbiddenException(
+        'Application must be in production mode to introspect Token 3',
+      );
+    }
+
     try {
       const user = await this.queryBus.execute(
-        new ExchangeCodeForProfileQuery(dto.authorizationCode),
+        new ExchangeCodeForProfileQuery(dto.token3),
       );
 
+      if (user.clientId !== application.id) {
+        return {
+          status: 'ERROR',
+          reason: 'Token 3 does not belong to this application',
+        };
+      }
+
       return {
-        valid: true,
+        status: 'OK',
         user,
       };
     } catch (error) {
       const message =
         error instanceof BadRequestException
           ? (error.getResponse() as { message?: string }).message ||
-            'Authorization code is invalid or expired'
-          : 'Authorization code is invalid or expired';
+            'Token 3 is invalid or expired'
+          : 'Token 3 is invalid or expired';
 
       return {
-        valid: false,
+        status: 'ERROR',
         reason: Array.isArray(message) ? message.join(' ') : message,
       };
     }
+  }
+
+  private async authenticateApplicationByApiToken(
+    authorizationHeader?: string,
+  ) {
+    const token = this.extractBearerToken(authorizationHeader);
+    const apiTokenHash = createHash('sha256').update(token).digest('hex');
+
+    const application =
+      await this.clientApplicationRepository.findByApiTokenHash(apiTokenHash);
+
+    if (!application) {
+      throw new UnauthorizedException('Invalid application API token');
+    }
+
+    return application;
+  }
+
+  private extractBearerToken(authorizationHeader?: string): string {
+    if (!authorizationHeader) {
+      throw new UnauthorizedException('Authorization header is required');
+    }
+
+    const [scheme, token] = authorizationHeader.split(' ');
+    if (scheme !== 'Bearer' || !token?.trim()) {
+      throw new UnauthorizedException('Invalid Authorization Bearer token');
+    }
+
+    return token.trim();
   }
 }

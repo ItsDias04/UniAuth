@@ -10,14 +10,13 @@ export class GetApplicationByIdQueryOutput implements IQueryOutput {
     public readonly status: ClientApplicationStatus,
     public readonly ip: string,
     public readonly ipIsVerified: boolean,
+    public readonly hasApiToken: boolean,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}
 }
 
-export class GetApplicationByIdQuery
-  implements IQueryInput<GetApplicationByIdQueryOutput>
-{
+export class GetApplicationByIdQuery implements IQueryInput<GetApplicationByIdQueryOutput> {
   constructor(
     public readonly ownerUserId: string,
     public readonly applicationId: string,

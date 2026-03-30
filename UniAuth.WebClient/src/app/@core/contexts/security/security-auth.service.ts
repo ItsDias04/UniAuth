@@ -28,6 +28,11 @@ export interface VerifyMfaAndLoginResponse {
     message: string;
 }
 
+export interface CurrentLoginSessionResponse {
+    status: 'OK';
+    userId: string;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -38,6 +43,10 @@ export class SecurityAuthService {
 
     initiate(payload: InitiateLoginRequest): Observable<InitiateLoginResponse> {
         return this.http.post<InitiateLoginResponse>(`${this.baseUrl}/initiate`, payload);
+    }
+
+    current(): Observable<CurrentLoginSessionResponse> {
+        return this.http.get<CurrentLoginSessionResponse>(`${this.baseUrl}/current`);
     }
 
     verifyMfa(payload: VerifyMfaAndLoginRequest): Observable<VerifyMfaAndLoginResponse> {

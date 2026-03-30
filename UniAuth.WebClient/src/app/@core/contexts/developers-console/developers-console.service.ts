@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
@@ -11,6 +11,7 @@ export interface DeveloperApplication {
     status: 'draft' | 'active' | 'inactive' | 'production';
     ip: string;
     ipIsVerified: boolean;
+    hasApiToken?: boolean;
     createdAt: string;
     updatedAt?: string;
 }
@@ -50,9 +51,14 @@ export interface RequestIpOwnershipVerificationResponse {
 }
 
 export interface IssueExternalRedirectTokenResponse {
-    token: string;
+    token1: string;
     expiresInSeconds: number;
-    redirectUrl: string;
+}
+
+export interface GenerateApplicationApiTokenResponse {
+    applicationId: string;
+    apiToken: string;
+    tokenType: 'Bearer';
 }
 
 @Injectable({
@@ -84,7 +90,11 @@ export class DevelopersConsoleService {
     }
 
     issueExternalRedirectToken(applicationId: string): Observable<IssueExternalRedirectTokenResponse> {
-        return this.http.post<IssueExternalRedirectTokenResponse>(`${this.baseUrl}/external/redirect-token`, { applicationId });
+        return this.http.post<IssueExternalRedirectTokenResponse>(`${this.baseUrl}/applications/${applicationId}/token-1`, {});
+    }
+
+    generateApplicationApiToken(applicationId: string): Observable<GenerateApplicationApiTokenResponse> {
+        return this.http.post<GenerateApplicationApiTokenResponse>(`${this.baseUrl}/applications/${applicationId}/api-token/generate`, {});
     }
 
     setApplicationIp(applicationId: string, ip: string): Observable<void> {

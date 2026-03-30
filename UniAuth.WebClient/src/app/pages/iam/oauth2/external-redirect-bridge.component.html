@@ -1,5 +1,5 @@
 <div class="bridge-page bg-surface-50 dark:bg-surface-950">
-    <p-card header="OAuth2 External Redirect" subheader="Автоматическая выдача токена и redirect">
+    <p-card header="Подтверждение входа во внешний сервис" subheader="Flow: Token 1 -> Token 2 -> Token 3">
         @if (errorMessage) {
             <p-message severity="error" [text]="errorMessage" styleClass="mb-3 w-full" />
         }
@@ -8,8 +8,38 @@
             <p-message severity="info" [text]="infoMessage" styleClass="mb-3 w-full" />
         }
 
-        <p class="m-0 text-muted-color mb-3">Проверяется токен пользователя, затем externalToken, затем выдается временный code и выполняется redirect.</p>
+        @if (!token1) {
+            <p class="m-0 text-muted-color">Token 1 не найден. Проверьте корректность ссылки внешнего сервиса.</p>
+        } @else {
+            <div class="token-preview mb-3">
+                <div class="token-label">Token 1</div>
+                <div class="token-value">{{ token1 }}</div>
+            </div>
 
-        <button pButton type="button" label="Повторить" [loading]="loading" (click)="handleFlow()"></button>
+            @if (checkingCurrent) {
+                <p class="m-0 text-muted-color mb-3">Проверяем текущую сессию и подготавливаем подтверждение...</p>
+            }
+
+            @if (!checkingCurrent && !isAuthenticated) {
+                <p class="m-0 text-muted-color mb-3">Сессия не активна. Выполняется переход на страницу входа...</p>
+            }
+
+            @if (!checkingCurrent && isAuthenticated) {
+                <p class="m-0 text-muted-color mb-3">Текущая сессия активна. Нажмите подтверждение, чтобы получить Token 3 и перейти на внешний ресурс.</p>
+
+                @if (token3) {
+                    <div class="token-preview mb-3">
+                        <div class="token-label">Token 3</div>
+                        <div class="token-value">{{ token3 }}</div>
+                        <small class="text-muted-color">TTL: {{ expiresInSeconds }} сек.</small>
+                    </div>
+                }
+
+                <div class="actions">
+                    <button pButton type="button" label="Подтвердить и перейти" [loading]="loading" (click)="confirmRedirect()"></button>
+                    <button pButton type="button" label="Сменить аккаунт" severity="secondary" [disabled]="loading" (click)="logoutAndLogin()"></button>
+                </div>
+            }
+        }
     </p-card>
 </div>

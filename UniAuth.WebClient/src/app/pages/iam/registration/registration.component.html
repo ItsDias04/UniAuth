@@ -8,7 +8,7 @@
                     <div class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-2">UniAuth — Регистрация</div>
                     <span class="text-muted-color font-medium">Шаг {{ currentStep }} из 3</span>
                     <div class="mt-3">
-                        <a routerLink="/auth/login" class="text-primary font-medium cursor-pointer">Вернуться ко входу</a>
+                        <a routerLink="/auth/login" [queryParams]="loginQueryParams" class="text-primary font-medium cursor-pointer">Вернуться ко входу</a>
                     </div>
                 </div>
 
@@ -43,13 +43,14 @@
                         </div>
 
                         <div class="field">
-                            <div ><label for="password" class="field-label">Пароль</label>
-                            <p-password fluid="true" id="password" formControlName="password" [feedback]="false" [toggleMask]="true" styleClass="w-full"></p-password>
-</div><div>
-    <label for="confirmPassword" class="field-label">Подтверждение пароля</label>
-                            <p-password fluid="true" id="confirmPassword" formControlName="confirmPassword" [feedback]="false" [toggleMask]="true" styleClass="w-full"></p-password>
-</div>
-                            
+                            <div>
+                                <label for="password" class="field-label">Пароль</label>
+                                <p-password fluid="true" id="password" formControlName="password" [feedback]="false" [toggleMask]="true" styleClass="w-full"></p-password>
+                            </div>
+                            <div>
+                                <label for="confirmPassword" class="field-label">Подтверждение пароля</label>
+                                <p-password fluid="true" id="confirmPassword" formControlName="confirmPassword" [feedback]="false" [toggleMask]="true" styleClass="w-full"></p-password>
+                            </div>
                         </div>
 
                         <div class="form-row">
@@ -110,9 +111,13 @@
                     <div class="success-block text-center">
                         <i class="pi pi-check-circle text-primary text-5xl mb-2"></i>
                         <h3 class="text-2xl m-0">Регистрация завершена</h3>
-                        <p class="text-muted-color m-0">Аккаунт успешно создан. Теперь можно войти в систему.</p>
+                        @if (returnUrl) {
+                            <p class="text-muted-color m-0">Аккаунт успешно создан. Выполните вход, чтобы вернуться к подтверждению редиректа.</p>
+                        } @else {
+                            <p class="text-muted-color m-0">Аккаунт успешно создан. Теперь можно войти в систему.</p>
+                        }
                         <div class="actions justify-center mt-2">
-                            <a pButton routerLink="/auth/login" label="К странице входа"></a>
+                            <a pButton routerLink="/auth/login" [queryParams]="loginQueryParams" label="К странице входа"></a>
                             <button pButton type="button" severity="secondary" label="Новая регистрация" (click)="resetFlow()"></button>
                         </div>
                     </div>

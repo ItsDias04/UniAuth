@@ -44,6 +44,20 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
+## SMTP configuration
+
+Create your local `.env` from `.env.example` and set SMTP credentials:
+
+```bash
+SMTP_EMAIL=your-email@gmail.com
+SMTP_APP_PASSWORD=your-16-char-app-password
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_FROM_EMAIL=your-email@gmail.com
+SMTP_FROM_NAME=UniAuth
+```
+
 ## Run tests
 
 ```bash

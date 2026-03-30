@@ -10,7 +10,6 @@ export interface IpVerificationTokenState {
 
 export interface ExternalRedirectTokenState {
   token: string;
-  userId: string;
   applicationId: string;
   redirectRoute: string;
 }
@@ -21,12 +20,16 @@ export interface IDevelopersConsoleRedisRepository {
     ttlSeconds: number,
   ): Promise<void>;
 
-  consumeIpVerificationToken(token: string): Promise<IpVerificationTokenState | null>;
+  consumeIpVerificationToken(
+    token: string,
+  ): Promise<IpVerificationTokenState | null>;
 
   saveExternalRedirectToken(
     state: ExternalRedirectTokenState,
     ttlSeconds: number,
   ): Promise<void>;
 
-  consumeExternalRedirectToken(token: string): Promise<ExternalRedirectTokenState | null>;
+  consumeExternalRedirectToken(
+    token: string,
+  ): Promise<ExternalRedirectTokenState | null>;
 }

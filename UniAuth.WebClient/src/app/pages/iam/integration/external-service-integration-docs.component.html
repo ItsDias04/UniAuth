@@ -1,0 +1,72 @@
+<div class="docs-page bg-surface-50 dark:bg-surface-950">
+    <div class="docs-container">
+        <p-card header="UniAuth Integration Guide" subheader="Документация для внешних сервисов (NestJS + Angular)">
+            <p class="m-0 mb-3 text-muted-color">Ниже готовый промт для команды внешнего сервиса и техническая документация подключения к UniAuth flow: Token 1 -> Token 2 -> Token 3.</p>
+
+            <!-- <div class="actions mb-4">
+                <a pButton routerLink="/auth/login" label="Вернуться к логину" severity="secondary"></a>
+                <button pButton type="button" label="Скопировать промт" (click)="copyPrompt()"></button>
+            </div> -->
+
+            @if (copyInfoMessage) {
+                <p-message severity="info" [text]="copyInfoMessage" styleClass="mb-4 w-full" />
+            }
+
+            <section class="section-block">
+                <h3>1. Базовые настройки интеграции</h3>
+                <ul>
+                    <li>UniAuth API base URL: <code>http://localhost:3001/api/v1</code></li>
+                    <li>Страница bridge UniAuth (локально): <code>http://localhost:4200/oauth2/external-redirect/&#123;token1&#125;</code></li>
+                    <li>Если UniAuth web размещен отдельно, используйте реальный публичный URL вместо localhost:4200.</li>
+                    <li>У внешнего сервиса должен быть зарегистрирован redirectRoute в UniAuth Developers Console.</li>
+                    <li>Внешний сервис работает через постоянный API token приложения (Bearer), а не через JWT владельца.</li>
+                </ul>
+            </section>
+
+            <section class="section-block">
+                <h3>2. Контракты API UniAuth</h3>
+                <h4>2.1 Сгенерировать API token (делает владелец в Developers Console)</h4>
+                <pre><code>{{ apiTokenGenerationExample }}</code></pre>
+
+                <h4>2.2 Получить Token 1 (на backend внешнего сервиса)</h4>
+                <pre><code>{{ token1EndpointExample }}</code></pre>
+
+                <h4>2.3 Подтверждение на стороне UniAuth (выполняет страница bridge)</h4>
+                <pre><code>{{ verifyToken1Example }}</code></pre>
+
+                <h4>2.4 Проверка и погашение Token 3 (внешний backend)</h4>
+                <pre><code>{{ introspectToken3Example }}</code></pre>
+            </section>
+
+            <section class="section-block">
+                <h3>3. Что должен сделать внешний сервис</h3>
+                <ol>
+                    <li>Добавить кнопку "Войти с помощью UniAuth" на страницу логина (Angular).</li>
+                    <li>Создать backend endpoint старта SSO (NestJS), который получает Token 1 и возвращает redirectUrl на UniAuth bridge.</li>
+                    <li>Добавить callback endpoint, который принимает token3 и вызывает introspect-token-3.</li>
+                    <li>На успешной валидации token3 создать/найти локального пользователя и выдать локальную сессию внешнего сервиса.</li>
+                    <li>На ошибке вернуть пользователя на страницу логина с понятным сообщением.</li>
+                    <li>Хранить application API token в секретах (env/secret manager), не в клиентском Angular-коде.</li>
+                </ol>
+            </section>
+
+            <section class="section-block">
+                <h3>4. Пример env для внешнего сервиса</h3>
+                <pre><code>{{ envExample }}</code></pre>
+            </section>
+
+            <section class="section-block">
+                <h3>5. Чеклист проверки интеграции</h3>
+                <ul>
+                    <li>Кнопка UniAuth видна на странице логина внешнего сервиса.</li>
+                    <li>По кнопке фронт зовет backend start endpoint и уходит на UniAuth bridge.</li>
+                    <li>Если в UniAuth нет сессии, пользователь проходит login/register/login.</li>
+                    <li>После подтверждения происходит редирект обратно во внешний сервис с token3.</li>
+                    <li>Callback внешнего сервиса вызывает introspect-token-3 с Bearer application API token.</li>
+                    <li>При status=OK пользователь авторизован во внешнем сервисе локальным токеном.</li>
+                    <li>Повторный вызов introspect с тем же token3 дает status=ERROR (одноразовость подтверждена).</li>
+                </ul>
+            </section>
+        </p-card>
+    </div>
+</div>

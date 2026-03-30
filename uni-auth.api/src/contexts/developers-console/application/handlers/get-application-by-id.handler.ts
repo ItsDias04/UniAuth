@@ -1,8 +1,5 @@
 import { ForbiddenException, Inject, NotFoundException } from '@nestjs/common';
-import {
-  IQueryHandler as NestQueryHandler,
-  QueryHandler,
-} from '@nestjs/cqrs';
+import { IQueryHandler as NestQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { IQueryHandler } from '../../../../common/cqrs';
 import {
   CLIENT_APPLICATION_REPOSITORY,
@@ -36,7 +33,9 @@ export class GetApplicationByIdHandler
     }
 
     if (application.ownerUserId !== query.ownerUserId) {
-      throw new ForbiddenException('You are not allowed to access this application');
+      throw new ForbiddenException(
+        'You are not allowed to access this application',
+      );
     }
 
     return new GetApplicationByIdQueryOutput(
@@ -46,7 +45,8 @@ export class GetApplicationByIdHandler
       application.redirectRoute,
       application.status,
       application.ip,
-        application.ipIsVerified,
+      application.ipIsVerified,
+      application.hasApiToken,
       application.createdAt,
       application.updatedAt,
     );
