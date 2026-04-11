@@ -1,0 +1,92 @@
+:host {
+    display: block;
+    min-height: 100vh;
+}
+
+.officer-layout {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 17.5rem minmax(0, 1fr);
+    background: radial-gradient(circle at 10% 5%, rgba(56, 189, 248, 0.16), transparent 35%), radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.14), transparent 40%), linear-gradient(140deg, #020617 0%, #051425 45%, #06111f 100%);
+}
+
+.officer-sidebar {
+    display: grid;
+    gap: 1rem;
+    padding: 1.1rem;
+    border-right: 1px solid rgba(148, 163, 184, 0.22);
+    background: linear-gradient(180deg, rgba(2, 6, 23, 0.9), rgba(3, 13, 30, 0.9));
+    backdrop-filter: blur(4px);
+}
+
+.brand {
+    display: grid;
+    gap: 0.35rem;
+
+    h2 {
+        margin: 0;
+        color: #e2e8f0;
+    }
+}
+
+.eyebrow {
+    margin: 0;
+    color: #67e8f9;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-family: 'IBM Plex Mono', 'Consolas', monospace;
+}
+
+.hint {
+    margin: 0;
+    color: #93c5fd;
+    font-size: 0.87rem;
+}
+
+.menu {
+    display: grid;
+    gap: 0.45rem;
+
+    a {
+        text-decoration: none;
+        color: #cbd5e1;
+        padding: 0.55rem 0.65rem;
+        border-radius: 0.6rem;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        background: rgba(15, 23, 42, 0.45);
+        transition:
+            transform 120ms ease,
+            border-color 120ms ease;
+    }
+
+    a:hover {
+        transform: translateY(-1px);
+        border-color: rgba(56, 189, 248, 0.42);
+    }
+
+    a.active {
+        color: #ecfeff;
+        border-color: rgba(34, 211, 238, 0.54);
+        background: linear-gradient(140deg, rgba(8, 145, 178, 0.4), rgba(22, 163, 74, 0.32));
+    }
+}
+
+.grow {
+    min-height: 0;
+}
+
+.officer-main {
+    min-width: 0;
+}
+
+@media (max-width: 960px) {
+    .officer-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .officer-sidebar {
+        border-right: 0;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+    }
+}

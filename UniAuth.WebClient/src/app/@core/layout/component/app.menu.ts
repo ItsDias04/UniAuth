@@ -38,6 +38,21 @@ export class AppMenu {
                         routerLink: ['/developer-console/documentation']
                     }
                 ]
+            },
+            {
+                label: 'Security SOC',
+                items: [
+                    {
+                        label: 'Мониторинг безопасности',
+                        icon: 'pi pi-fw pi-shield',
+                        routerLink: ['/security-monitor/dashboard']
+                    },
+                    {
+                        label: 'Вход безопасника',
+                        icon: 'pi pi-fw pi-user-lock',
+                        routerLink: ['/security-monitor/login']
+                    }
+                ]
             }
 
             // {

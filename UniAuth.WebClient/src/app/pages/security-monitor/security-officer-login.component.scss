@@ -1,0 +1,128 @@
+:host {
+    display: block;
+    min-height: 100vh;
+    font-family: 'Space Grotesk', 'Trebuchet MS', 'Segoe UI', sans-serif;
+}
+
+.soc-login-shell {
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(circle at 12% 15%, rgba(255, 183, 3, 0.2), transparent 40%), radial-gradient(circle at 82% 82%, rgba(22, 163, 74, 0.16), transparent 42%), linear-gradient(135deg, #08141f 0%, #0d2a3f 52%, #05121d 100%);
+    display: grid;
+    place-items: center;
+    padding: 1.5rem;
+}
+
+.soc-glow {
+    position: absolute;
+    width: 22rem;
+    height: 22rem;
+    border-radius: 999px;
+    filter: blur(55px);
+    opacity: 0.32;
+    animation: drift 7s ease-in-out infinite;
+}
+
+.soc-glow-left {
+    left: -8rem;
+    top: -7rem;
+    background: #f59e0b;
+}
+
+.soc-glow-right {
+    right: -8rem;
+    bottom: -7rem;
+    background: #10b981;
+    animation-delay: 1.6s;
+}
+
+.soc-login-card {
+    position: relative;
+    width: min(34rem, 100%);
+    border-radius: 1.2rem;
+    background: linear-gradient(160deg, rgba(7, 22, 37, 0.95), rgba(11, 39, 57, 0.94));
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    box-shadow: 0 24px 70px rgba(2, 6, 23, 0.48);
+    padding: 1.5rem;
+    color: #e2e8f0;
+    backdrop-filter: blur(8px);
+    animation: reveal 340ms ease-out;
+}
+
+.soc-header {
+    display: grid;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+
+    h1 {
+        margin: 0;
+        font-size: clamp(1.5rem, 2.5vw, 2rem);
+        letter-spacing: 0.01em;
+    }
+
+    p {
+        margin: 0;
+        color: #cbd5e1;
+        line-height: 1.5;
+    }
+}
+
+.soc-eyebrow {
+    margin: 0;
+    color: #fbbf24;
+    font-family: 'IBM Plex Mono', 'Consolas', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.soc-form {
+    display: grid;
+    gap: 0.95rem;
+}
+
+.field {
+    display: grid;
+    gap: 0.45rem;
+
+    label {
+        font-weight: 600;
+        color: #dbeafe;
+    }
+}
+
+.soc-footer {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+
+    a {
+        color: #93c5fd;
+        text-decoration: none;
+        border-bottom: 1px dashed rgba(147, 197, 253, 0.5);
+    }
+}
+
+@keyframes reveal {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes drift {
+    0% {
+        transform: translate(0, 0);
+    }
+    50% {
+        transform: translate(12px, -15px);
+    }
+    100% {
+        transform: translate(0, 0);
+    }
+}

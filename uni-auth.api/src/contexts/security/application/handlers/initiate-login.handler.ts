@@ -30,10 +30,7 @@ import {
   AUTH_SESSION_REPOSITORY,
   IAuthSessionRepository,
 } from '../../domain/repositories/auth-session.repository.interface';
-import {
-  ITokenIssuer,
-  TOKEN_ISSUER,
-} from '../services/token-issuer.interface';
+import { ITokenIssuer, TOKEN_ISSUER } from '../services/token-issuer.interface';
 
 @CommandHandler(InitiateLoginCommand)
 export class InitiateLoginHandler
@@ -43,6 +40,7 @@ export class InitiateLoginHandler
 {
   private readonly mfaTtlSeconds = 300;
   private readonly mfaRequiredByDefault: boolean;
+  private readonly securityOfficerLogin: string | null;
 
   constructor(
     @Inject(CREDENTIALS_VERIFIER)
@@ -57,8 +55,16 @@ export class InitiateLoginHandler
     private readonly tokenIssuer: ITokenIssuer,
     private readonly configService: ConfigService,
   ) {
-    const value = this.configService.get<string>('SECURITY_MFA_REQUIRED', 'true');
+    const value = this.configService.get<string>(
+      'SECURITY_MFA_REQUIRED',
+      'true',
+    );
     this.mfaRequiredByDefault = value.toLowerCase() === 'true';
+    this.securityOfficerLogin =
+      this.configService
+        .get<string>('SECURITY_OFFICER_LOGIN')
+        ?.trim()
+        .toLowerCase() ?? null;
   }
 
   async execute(
@@ -66,6 +72,15 @@ export class InitiateLoginHandler
   ): Promise<InitiateLoginCommandOutput> {
     if (!command.email?.trim() || !command.password?.trim()) {
       throw new BadRequestException('Email and password are required');
+    }
+
+    if (
+      this.securityOfficerLogin &&
+      command.email.trim().toLowerCase() === this.securityOfficerLogin
+    ) {
+      throw new UnauthorizedException(
+        'Security officer account is isolated. Use dedicated security monitoring login endpoint.',
+      );
     }
 
     const validated = await this.credentialsVerifier.validate(
@@ -79,7 +94,10 @@ export class InitiateLoginHandler
 
     if (!this.mfaRequiredByDefault) {
       const sessionId = randomUUID();
-      const issued = await this.tokenIssuer.issueTokenPair(validated.userId, sessionId);
+      const issued = await this.tokenIssuer.issueTokenPair(
+        validated.userId,
+        sessionId,
+      );
 
       await this.authSessionRepository.create({
         id: sessionId,
@@ -113,7 +131,10 @@ export class InitiateLoginHandler
       this.mfaTtlSeconds,
     );
 
-    await this.securityEmailSender.sendLoginVerificationCode(validated.email, code);
+    await this.securityEmailSender.sendLoginVerificationCode(
+      validated.email,
+      code,
+    );
 
     return new InitiateLoginCommandOutput(
       true,

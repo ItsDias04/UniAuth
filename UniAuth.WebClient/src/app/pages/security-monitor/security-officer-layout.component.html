@@ -1,0 +1,21 @@
+<div class="officer-layout">
+    <aside class="officer-sidebar">
+        <div class="brand">
+            <p class="eyebrow">UniAuth SOC</p>
+            <h2>Security Console</h2>
+            <p class="hint">Изолированный контур безопасника</p>
+        </div>
+
+        <nav class="menu">
+            <a routerLink="/security-monitor/dashboard" routerLinkActive="active">Журнал мониторинга</a>
+        </nav>
+
+        <div class="grow"></div>
+
+        <button pButton type="button" severity="secondary" label="Выйти" (click)="logoutOfficer()"></button>
+    </aside>
+
+    <main class="officer-main">
+        <router-outlet></router-outlet>
+    </main>
+</div>

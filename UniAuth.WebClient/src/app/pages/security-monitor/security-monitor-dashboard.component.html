@@ -1,0 +1,168 @@
+<section class="monitor-shell">
+    <header class="monitor-header">
+        <div>
+            <p class="monitor-eyebrow">Security Monitoring Console</p>
+            <h1>SOC Журналирование и IDS/IPS</h1>
+            <p>Полный поток событий API, подозрительные запросы и предотвращённые атаки.</p>
+        </div>
+        <div class="header-actions">
+            <button pButton type="button" label="Обновить" [loading]="loadingEvents || loadingSummary" (click)="refresh()"></button>
+            <button pButton type="button" label="Скачать логи" severity="help" [loading]="loadingDownload" (click)="downloadLogs()"></button>
+            <button pButton type="button" severity="secondary" label="Выйти" (click)="logoutOfficer()"></button>
+        </div>
+    </header>
+
+    @if (errorMessage) {
+        <p-message severity="error" [text]="errorMessage" styleClass="w-full mb-3" />
+    }
+
+    @if (infoMessage) {
+        <p-message severity="info" [text]="infoMessage" styleClass="w-full mb-3" />
+    }
+
+    @if (summary) {
+        <div class="metrics-grid">
+            <article class="metric-card metric-total">
+                <span>Всего событий (24ч)</span>
+                <strong>{{ summary.totalEvents }}</strong>
+            </article>
+            <article class="metric-card metric-normal">
+                <span>Нормальные</span>
+                <strong>{{ summary.normalEvents }}</strong>
+            </article>
+            <article class="metric-card metric-suspicious">
+                <span>Подозрительные</span>
+                <strong>{{ summary.suspiciousEvents }}</strong>
+            </article>
+            <article class="metric-card metric-prevented">
+                <span>Предотвращённые</span>
+                <strong>{{ summary.preventedEvents }}</strong>
+            </article>
+            <article class="metric-card metric-ips">
+                <span>Уникальные IP</span>
+                <strong>{{ summary.uniqueIpAddresses }}</strong>
+            </article>
+        </div>
+
+        @if (summary.topReasons.length > 0) {
+            <div class="reason-board">
+                <h3>Топ причин срабатывания IDS/IPS</h3>
+                <div class="reason-list">
+                    @for (item of summary.topReasons; track item.reason) {
+                        <div class="reason-item">
+                            <span>{{ item.reason }}</span>
+                            <b>{{ item.count }}</b>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+
+    <div class="control-card">
+        <div class="tab-switcher">
+            <button type="button" [class.active]="activeTab === 'all'" (click)="setTab('all')">Все логи</button>
+            <button type="button" [class.active]="activeTab === 'suspicious'" (click)="setTab('suspicious')">Подозрительные</button>
+            <button type="button" [class.active]="activeTab === 'prevented'" (click)="setTab('prevented')">Предотвращённые</button>
+        </div>
+
+        <div class="filters-grid">
+            <input pInputText [(ngModel)]="search" placeholder="Поиск: path / ip / user / reason" />
+            <input pInputText type="datetime-local" [(ngModel)]="from" />
+            <input pInputText type="datetime-local" [(ngModel)]="to" />
+            <label class="filter-toggle">
+                <input type="checkbox" [(ngModel)]="excludeCurrentOfficer" />
+                <span>Показывать только логи других пользователей</span>
+            </label>
+            <button pButton type="button" label="Применить" (click)="applyFilters()"></button>
+            <button pButton type="button" severity="secondary" label="Сбросить" (click)="clearFilters()"></button>
+        </div>
+
+        <div class="table-headline">
+            <h3>{{ tabLabel(activeTab) }}</h3>
+            <span>Показано {{ events.length }} из {{ total }}</span>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Время</th>
+                        <th>Категория</th>
+                        <th>HTTP</th>
+                        <th>Статус</th>
+                        <th>IP</th>
+                        <th>User</th>
+                        <th>Причины</th>
+                        <th>Детали</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!events.length && !loadingEvents) {
+                        <tr>
+                            <td colspan="8" class="empty-cell">События по фильтру не найдены.</td>
+                        </tr>
+                    }
+
+                    @for (event of events; track event.id) {
+                        <tr>
+                            <td>{{ formatDate(event.createdAt) }}</td>
+                            <td>
+                                <span class="severity-pill" [ngClass]="severityClass(event.category)">{{ categoryLabel(event.category) }}</span>
+                            </td>
+                            <td>
+                                <div class="method-line">{{ event.method }}</div>
+                                <div class="path-line">{{ event.path }}</div>
+                                <small>{{ event.durationMs }} ms</small>
+                            </td>
+                            <td>{{ event.responseStatus }}</td>
+                            <td>{{ event.ipAddress }}</td>
+                            <td>{{ event.userId || 'anonymous' }}</td>
+                            <td>
+                                @if (event.reasons.length) {
+                                    <ul>
+                                        @for (reason of event.reasons; track reason) {
+                                            <li>{{ reason }}</li>
+                                        }
+                                    </ul>
+                                } @else {
+                                    <span>-</span>
+                                }
+                            </td>
+                            <td>
+                                <button pButton type="button" [label]="expandedEventId === event.id ? 'Скрыть' : 'Открыть'" size="small" severity="secondary" (click)="toggleEventDetails(event.id)"></button>
+                            </td>
+                        </tr>
+
+                        @if (expandedEventId === event.id) {
+                            <tr class="details-row">
+                                <td colspan="8">
+                                    <div class="details-grid">
+                                        <article>
+                                            <h4>Request Headers</h4>
+                                            <pre>{{ asPretty(event.requestHeaders) }}</pre>
+                                        </article>
+                                        <article>
+                                            <h4>Request Body</h4>
+                                            <pre>{{ asPretty(event.requestBody) }}</pre>
+                                        </article>
+                                        <article>
+                                            <h4>Response Body</h4>
+                                            <pre>{{ asPretty(event.responseBody) }}</pre>
+                                        </article>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pager">
+            <button pButton type="button" label="Назад" severity="secondary" [disabled]="offset === 0 || loadingEvents" (click)="goPrev()"></button>
+            <span>Смещение: {{ offset }}</span>
+            <button pButton type="button" label="Вперёд" severity="secondary" [disabled]="offset + limit >= total || loadingEvents" (click)="goNext()"></button>
+        </div>
+    </div>
+</section>

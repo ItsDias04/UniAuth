@@ -24,7 +24,10 @@ import {
   CLIENT_APPLICATION_REPOSITORY,
   IClientApplicationRepository,
 } from '../../developers-console/domain/repositories/client-application.repository.interface';
-
+export enum ApplicationStatuses {
+  DEVELOPMENT = 'development',
+  PRODUCTION = 'production',
+}
 @ApiTags('OAuth2 SSO')
 @Controller('oauth2/sso')
 export class Oauth2SsoController {
@@ -134,7 +137,7 @@ export class Oauth2SsoController {
       request.headers.authorization,
     );
 
-    if (application.status !== 'production') {
+    if (application.status !== ApplicationStatuses.PRODUCTION) {
       throw new ForbiddenException(
         'Application must be in production mode to introspect Token 3',
       );

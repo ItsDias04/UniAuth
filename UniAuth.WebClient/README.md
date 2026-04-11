@@ -57,3 +57,17 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Security Monitoring UI
+
+The WebClient now includes a dedicated SOC interface:
+
+- `/security-monitor/login` - isolated security officer login
+- `/security-monitor/dashboard` - security events dashboard
+
+The dashboard supports:
+
+- all logs / suspicious logs / prevented actions views,
+- search and time filters,
+- detailed request/response payload inspection,
+- summary metrics for the last 24 hours.

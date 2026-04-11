@@ -1,0 +1,38 @@
+<div class="soc-login-shell">
+    <div class="soc-glow soc-glow-left"></div>
+    <div class="soc-glow soc-glow-right"></div>
+
+    <section class="soc-login-card">
+        <header class="soc-header">
+            <p class="soc-eyebrow">UniAuth Security Operations Console</p>
+            <h1>Вход безопасника</h1>
+            <p>Этот аккаунт используется только для просмотра журналов безопасности и предотвращённых действий.</p>
+        </header>
+
+        @if (infoMessage) {
+            <p-message severity="info" [text]="infoMessage" styleClass="mb-3 w-full" />
+        }
+
+        @if (errorMessage) {
+            <p-message severity="error" [text]="errorMessage" styleClass="mb-3 w-full" />
+        }
+
+        <div class="soc-form">
+            <div class="field">
+                <label for="soc-login">Логин безопасника</label>
+                <input pInputText id="soc-login" [(ngModel)]="login" placeholder="security.officer" />
+            </div>
+
+            <div class="field">
+                <label for="soc-password">Пароль</label>
+                <p-password id="soc-password" [(ngModel)]="password" [toggleMask]="true" [feedback]="false" placeholder="Введите пароль"></p-password>
+            </div>
+
+            <button pButton type="button" label="Войти в SOC" [loading]="loading" (click)="onLogin()"></button>
+        </div>
+
+        <footer class="soc-footer">
+            <a routerLink="/auth/login">Вернуться к обычному входу</a>
+        </footer>
+    </section>
+</div>

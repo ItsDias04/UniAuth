@@ -4,7 +4,8 @@ import { AuthSessionService } from '@/@core/contexts/security/auth-session.servi
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
     const authSessionService = inject(AuthSessionService);
-    const accessToken = authSessionService.getAccessToken();
+    const isSecurityMonitoringRequest = req.url.includes('/security-monitoring');
+    const accessToken = isSecurityMonitoringRequest ? authSessionService.getSecurityOfficerToken() : authSessionService.getAccessToken();
 
     if (!accessToken) {
         return next(req);

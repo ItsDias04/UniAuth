@@ -58,7 +58,7 @@ export class ClientApplicationRepository implements IClientApplicationRepository
       id: row.id,
       ownerUserId: row.ownerUserId,
       name: row.name,
-      redirectRoute: row.redirectRoute,
+      redirectRoute: row.redirectRoute ?? '',
       status: (row.status as ClientApplicationStatus) || 'draft',
       ip: row.ip,
       ipIsVerified: row.ipIsVerified,

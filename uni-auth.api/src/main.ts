@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
-import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
@@ -22,9 +21,6 @@ async function bootstrap() {
 
   // Global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
-
-  // Global audit interceptor
-  app.useGlobalInterceptors(new AuditInterceptor());
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -56,11 +52,11 @@ bootstrap();
 // UniAuth — универсальный провайдер идентификации
 // c поддержкой многофакторной аутентификации
 
-// Сыртқы ақпараттық жүйелер үшін көпфакторлы аутентификацияны (MFA) қолдайтын 
-// идентификацияның қауіпсіз провайдерінің (Identity Provider) архитектурасын әзірлеу / 
+// Сыртқы ақпараттық жүйелер үшін көпфакторлы аутентификацияны (MFA) қолдайтын
+// идентификацияның қауіпсіз провайдерінің (Identity Provider) архитектурасын әзірлеу /
 
-// Разработка архитектуры безопасного провайдера идентификации (Identity Provider) 
-// с поддержкой многофакторной аутентификации (MFA) для внешних информационных систем 
+// Разработка архитектуры безопасного провайдера идентификации (Identity Provider)
+// с поддержкой многофакторной аутентификации (MFA) для внешних информационных систем
 
-// Development of a secure Identity Provider architecture with Multi-Factor 
+// Development of a secure Identity Provider architecture with Multi-Factor
 // Authentication (MFA) support for external information systems

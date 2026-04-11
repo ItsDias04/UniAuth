@@ -25,6 +25,20 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Security Monitoring Module
+
+The project now includes a full security monitoring module with:
+
+- request/response audit logging for all HTTP traffic,
+- intrusion detection and prevention (IDS/IPS),
+- suspicious/prevented action email alerts,
+- dedicated isolated security officer login for SOC access,
+- UI support in WebClient for security events.
+
+Detailed module documentation is available at:
+
+- `docs/SECURITY-MONITORING-MODULE.md`
+
 ## Project setup
 
 ```bash
